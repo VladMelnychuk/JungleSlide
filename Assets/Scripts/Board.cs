@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using UnityEditor;
 using UnityEngine;
 
@@ -30,6 +31,7 @@ public class Board : MonoBehaviour
     Vector3 oldpos = Vector3.zero;
     void Update()
     {
+	    if (Input.GetKeyDown(KeyCode.Space)) DebugGrid();
 	    Debug.DrawRay(oldpos, Camera.main.transform.forward * 20, Color.white, 10f);
 	    if (Input.GetMouseButtonDown(0))
 	    {
@@ -38,7 +40,7 @@ public class Board : MonoBehaviour
 		    var hit = Physics2D.Raycast(pos, Vector2.zero);
 		    if (hit.collider && hit.collider.gameObject.layer == blockLayerID)
 		    {
-			    print(hit.collider.gameObject.name);
+			    print("Hit: " + hit.collider.gameObject.name);
 			    StartCoroutine(MovingBlock(hit.collider.gameObject));
 		    }
 		    else
@@ -88,7 +90,7 @@ public class Board : MonoBehaviour
 		    newPos.x = newX;
 		    int y = Mathf.RoundToInt(newPos.y);
 
-		    if (blocksGrid[newX, y] == null)
+		    if (IsMoveValid(blockComponent, newX, Mathf.RoundToInt(newPos.y)))
 		    {
 			    // move successful
 			    moveSuccesful = true;
@@ -110,6 +112,8 @@ public class Board : MonoBehaviour
 			    blocksGrid[oldPosition.x, oldPosition.y] = null;
 		    }
 		    FillBlockCoordinates(block.transform);
+		    ApplyGravity();
+		    CheckLines();
 	    }
 	    
     }
@@ -125,12 +129,13 @@ public class Board : MonoBehaviour
     void FillBlockCoordinates(Transform parentBlock)
     {
 	    var block = parentBlock.GetComponent<Block>();
+	    block.blockPositions.Clear();
 	    foreach (Transform subBlock in parentBlock)
 	    {
 		    var pos = subBlock.transform.position;
 		    var coordinates = new Vector2Int(Mathf.RoundToInt(pos.x), Mathf.RoundToInt(pos.y));
 		    block.blockPositions.Add(coordinates);
-		    Debug.Log(subBlock.gameObject.name + " : " + coordinates);
+//		    Debug.Log(subBlock.gameObject.name + " : " + coordinates.x + " - " + coordinates.y);
 		    blocksGrid[coordinates.x, coordinates.y] = subBlock;
 	    }
     }
@@ -146,12 +151,44 @@ public class Board : MonoBehaviour
 	    }
     }
 
+    void ApplyGravity()
+    {
+	    foreach (Transform block in blocksHolder.transform)
+	    {
+		    var blockComponent = block.GetComponent<Block>();
+		    bool canFall = true;
+		    foreach (var position in blockComponent.blockPositions)
+		    {
+			    if (position.y == 0)
+			    {
+				    canFall = false;
+				    continue;
+			    }
+
+			    if (blocksGrid[position.x, position.y - 1] != null) canFall = false;
+		    }
+
+		    if (canFall)
+		    {
+			    block.transform.position += Vector3.down;
+			    print(blockComponent.blockPositions.Count);
+			    for (int i = 0; i < blockComponent.blockPositions.Count; i++)
+			    {
+				    var oldPos = blockComponent.blockPositions[i];
+				    blocksGrid[oldPos.x, oldPos.y] = null;
+				    blockComponent.blockPositions[i] = new Vector2Int(oldPos.x, oldPos.y - 1);
+				    FillBlockCoordinates(block);
+				    print(oldPos.x + " " + oldPos.y);
+			    }
+		    }
+	    }
+    }
+
     void CheckLines()
     {
-	    var lineFound = false;
 	    for (int i = 0; i < width; i++)
 	    {
-		    lineFound = true;
+		    var lineFound = true;
 		    for (int j = 0; j < height; j++)
 		    {
 			    if (blocksGrid[i, j] == null)
@@ -159,14 +196,43 @@ public class Board : MonoBehaviour
 				    lineFound = false;
 				    break;
 			    }
-
-			    if (lineFound)
-			    {
-				    // pop
-				    Debug.LogError("pop");
-			    }
 		    }
+		    if (lineFound)
+            {
+            	// pop
+            	Debug.LogError("pop");
+            }
 	    }
+    }
+
+    void DebugGrid()
+    {
+	    StringBuilder stringBuilder = new StringBuilder();
+	    for (int y = 0; y < height; y++)
+	    {
+		    for (int x = 0; x < width; x++) {
+			    if (blocksGrid[x, y] == null)
+			    {
+				    stringBuilder.Append(" . ");
+			    }
+			    else
+			    {
+				    stringBuilder.Append("X ");
+			    }
+			}
+
+		    stringBuilder.Append("\n");
+	    }
+	    Debug.Log(stringBuilder.ToString());
+	}
+
+    private bool IsMoveValid(Block block, int newX, int y)
+    {
+	    for (int x = newX; x < newX + block.size; x++)
+	    {
+		    if (blocksGrid[x, y] != null) return false;
+	    }
+	    return true;
     }
     
 }
