@@ -14,7 +14,7 @@ public class Board : MonoBehaviour
 	private BackgroundTile[,] allTiles;
 	
 	private static Transform[,] blocksGrid;
-	[SerializeField] private GameObject blocksHolder;
+	[SerializeField] private Transform blocksHolder;
 
 	private int blockLayerID = 8;
     
@@ -75,74 +75,69 @@ public class Board : MonoBehaviour
 		    // set old position to null
 		    blocksGrid[oldPosition.x, oldPosition.y] = null;
 	    }
-	    var moveSuccesful = false;
+	    
+	    var moveSuccessful = false;
 	    while (Input.GetMouseButton(0))
 	    {
-		    // get edges
+		    // current new position of a parent block
 		    var newPos = block.transform.position;
+		    
 		    var newX = Mathf.RoundToInt(Camera.main.ScreenToWorldPoint(Input.mousePosition).x);
-
-		    var leftEdge = newPos.y;
 		    
 		    if (newX >= width) newX = width - 1;
 		    else if (newX < 0) newX = 0;
 		    
 		    newPos.x = newX;
-		    int y = Mathf.RoundToInt(newPos.y);
 
 		    if (IsMoveValid(blockComponent, newX, Mathf.RoundToInt(newPos.y)))
 		    {
 			    // move successful
-			    moveSuccesful = true;
+			    moveSuccessful = true;
 			    block.transform.position = newPos;
 		    }
 		    else
 		    {
-			    moveSuccesful = false;
+			    moveSuccessful = false;
 		    }
 		    
 		    yield return null;
 	    }
 	    
-	    if (moveSuccesful)
+	    if (moveSuccessful)
 	    {
-		    foreach (var oldPosition in blockComponent.blockPositions)
-		    {
-			    // set old position to null
-			    blocksGrid[oldPosition.x, oldPosition.y] = null;
-		    }
-		    FillBlockCoordinates(block.transform);
+		    // update grid
+		    SetBlockCoordinatesToGrid(block.transform, blockComponent);
+		    
 		    ApplyGravity();
-		    CheckLines();
+//		    CheckLines();
 	    }
 	    
     }
 
     void FillGrid()
     {
-	    foreach (Transform blockTransform in blocksHolder.transform)
+	    foreach (Transform blockTransform in blocksHolder)
 	    {
-		    FillBlockCoordinates(blockTransform);
+		    var block = blockTransform.GetComponent<Block>(); 
+		    SetBlockCoordinatesToGrid(blockTransform, block);
 	    }
     }
 
-    void FillBlockCoordinates(Transform parentBlock)
+    void SetBlockCoordinatesToGrid(Transform parentBlock, Block block)
     {
-	    var block = parentBlock.GetComponent<Block>();
 	    block.blockPositions.Clear();
 	    foreach (Transform subBlock in parentBlock)
 	    {
 		    var pos = subBlock.transform.position;
 		    var coordinates = new Vector2Int(Mathf.RoundToInt(pos.x), Mathf.RoundToInt(pos.y));
 		    block.blockPositions.Add(coordinates);
-//		    Debug.Log(subBlock.gameObject.name + " : " + coordinates.x + " - " + coordinates.y);
 		    blocksGrid[coordinates.x, coordinates.y] = subBlock;
 	    }
     }
 
     void EndTurn()
     {
-	    foreach (Transform blockParent in blocksHolder.transform)
+	    foreach (Transform blockParent in blocksHolder)
 	    {
 		    foreach (Transform block in blockParent)
 		    {
@@ -153,16 +148,17 @@ public class Board : MonoBehaviour
 
     void ApplyGravity()
     {
-	    foreach (Transform block in blocksHolder.transform)
+	    foreach (Transform block in blocksHolder)
 	    {
 		    var blockComponent = block.GetComponent<Block>();
-		    bool canFall = true;
+		    var canFall = true;
 		    foreach (var position in blockComponent.blockPositions)
 		    {
 			    if (position.y == 0)
 			    {
+				    // block already at y = 0
 				    canFall = false;
-				    continue;
+				    break;
 			    }
 
 			    if (blocksGrid[position.x, position.y - 1] != null) canFall = false;
@@ -170,39 +166,26 @@ public class Board : MonoBehaviour
 
 		    if (canFall)
 		    {
+			    // move block down
 			    block.transform.position += Vector3.down;
-			    print(blockComponent.blockPositions.Count);
-			    for (int i = 0; i < blockComponent.blockPositions.Count; i++)
-			    {
-				    var oldPos = blockComponent.blockPositions[i];
-				    blocksGrid[oldPos.x, oldPos.y] = null;
-				    blockComponent.blockPositions[i] = new Vector2Int(oldPos.x, oldPos.y - 1);
-				    FillBlockCoordinates(block);
-				    print(oldPos.x + " " + oldPos.y);
-			    }
+			    ClearBlockCoordinatesOnGrid(blockComponent.blockPositions);
+			    blockComponent.blockPositions.Clear();
+			    SetBlockCoordinatesToGrid(block, blockComponent);
 		    }
+	    }
+    }
+
+    private void ClearBlockCoordinatesOnGrid(List<Vector2Int> oldCoordinates)
+    {
+	    foreach (var oldCoordinate in oldCoordinates)
+	    {
+		    blocksGrid[oldCoordinate.x, oldCoordinate.y] = null;
 	    }
     }
 
     void CheckLines()
     {
-	    for (int i = 0; i < width; i++)
-	    {
-		    var lineFound = true;
-		    for (int j = 0; j < height; j++)
-		    {
-			    if (blocksGrid[i, j] == null)
-			    {
-				    lineFound = false;
-				    break;
-			    }
-		    }
-		    if (lineFound)
-            {
-            	// pop
-            	Debug.LogError("pop");
-            }
-	    }
+	    
     }
 
     void DebugGrid()
@@ -210,16 +193,10 @@ public class Board : MonoBehaviour
 	    StringBuilder stringBuilder = new StringBuilder();
 	    for (int y = 0; y < height; y++)
 	    {
-		    for (int x = 0; x < width; x++) {
-			    if (blocksGrid[x, y] == null)
-			    {
-				    stringBuilder.Append(" . ");
-			    }
-			    else
-			    {
-				    stringBuilder.Append("X ");
-			    }
-			}
+		    for (int x = 0; x < width; x++)
+		    {
+			    stringBuilder.Append(blocksGrid[x, y] == null ? " . " : "X ");
+		    }
 
 		    stringBuilder.Append("\n");
 	    }
