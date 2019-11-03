@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Text;
-using UnityEditor;
 using UnityEngine;
 
 public class Board : MonoBehaviour
@@ -107,9 +106,7 @@ public class Board : MonoBehaviour
 	    {
 		    // update grid
 		    SetBlockCoordinatesToGrid(block.transform, blockComponent);
-		    
-		    ApplyGravity();
-//		    CheckLines();
+		    EndTurn();
 	    }
 	    
     }
@@ -137,17 +134,13 @@ public class Board : MonoBehaviour
 
     void EndTurn()
     {
-	    foreach (Transform blockParent in blocksHolder)
-	    {
-		    foreach (Transform block in blockParent)
-		    {
-			    
-		    }
-	    }
+	    ApplyGravity();
+//	    CheckLines();
     }
 
     void ApplyGravity()
     {
+	    var blockFell = false;
 	    foreach (Transform block in blocksHolder)
 	    {
 		    var blockComponent = block.GetComponent<Block>();
@@ -166,6 +159,7 @@ public class Board : MonoBehaviour
 
 		    if (canFall)
 		    {
+			    blockFell = true;
 			    // move block down
 			    block.transform.position += Vector3.down;
 			    ClearBlockCoordinatesOnGrid(blockComponent.blockPositions);
@@ -173,9 +167,14 @@ public class Board : MonoBehaviour
 			    SetBlockCoordinatesToGrid(block, blockComponent);
 		    }
 	    }
+
+	    if (blockFell)
+	    {
+		    CheckLines();
+	    }
     }
 
-    private void ClearBlockCoordinatesOnGrid(List<Vector2Int> oldCoordinates)
+    private static void ClearBlockCoordinatesOnGrid(List<Vector2Int> oldCoordinates)
     {
 	    foreach (var oldCoordinate in oldCoordinates)
 	    {
@@ -183,10 +182,29 @@ public class Board : MonoBehaviour
 	    }
     }
 
-    void CheckLines()
+    private void CheckLines()
     {
-	    
-    }
+	    for (int y = 0; y < height; y++)
+	    {
+		    var lineFound = true;
+		    for (int x = 0; x < width; x++)
+		    {
+			    // TODO match block types later
+			    if (blocksGrid[x, y] == null) lineFound = false;
+		    }
+
+		    if (lineFound)
+		    {
+			    // woala
+			    for (int x = 0; x < width; x++)
+			    {
+				    Destroy(blocksGrid[x, y].gameObject);
+			    }
+			    ApplyGravity();
+			    break;
+		    }
+	    }
+}
 
     void DebugGrid()
     {
