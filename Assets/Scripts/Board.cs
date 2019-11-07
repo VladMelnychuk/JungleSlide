@@ -104,12 +104,12 @@ public class Board : MonoBehaviour
             yield return null;
         }
 
-        if (startingPos != transform.position) moveSuccessful = true;
+
+        moveSuccessful = startingPos != block.transform.position;
+        
 
         if (moveSuccessful)
         {
-//            print("moveSuccessful");
-
             // update grid
             SetBlockCoordinatesToGrid(block.transform, blockComponent);
 
