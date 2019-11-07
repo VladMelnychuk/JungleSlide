@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -17,13 +16,13 @@ public class Board : MonoBehaviour
     private static Transform[,] blocksGrid;
     [SerializeField] private Transform blocksHolder;
 
-    private int blockLayerID = 8;
+    private int _blockLayerId = 8;
 
     private Coroutine _blockCoroutine;
 
     void Start()
     {
-        blockLayerID = LayerMask.NameToLayer("block");
+        _blockLayerId = LayerMask.NameToLayer("block");
 
         allTiles = new BackgroundTile [width, height];
 
@@ -45,7 +44,7 @@ public class Board : MonoBehaviour
         var pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         oldpos = pos;
         var hit = Physics2D.Raycast(pos, Vector2.zero);
-        if (hit.collider && hit.collider.gameObject.layer == blockLayerID)
+        if (hit.collider && hit.collider.gameObject.layer == _blockLayerId)
         {
             _blockCoroutine = StartCoroutine(MovingBlock(hit.collider.gameObject));
         }
@@ -111,7 +110,7 @@ public class Board : MonoBehaviour
         if (moveSuccessful)
         {
             // update grid
-            SetBlockCoordinatesToGrid(block.transform, blockComponent);
+            SetBlockCoordinatesToGrid(block.transform, ref blockComponent);
 
             ApplyGravity();
 
@@ -141,13 +140,18 @@ public class Board : MonoBehaviour
         foreach (Transform blockTransform in blocksHolder)
         {
             var block = blockTransform.GetComponent<Block>();
-            SetBlockCoordinatesToGrid(blockTransform, block);
+            SetBlockCoordinatesToGrid(blockTransform, ref block);
         }
     }
 
-    void SetBlockCoordinatesToGrid(Transform parentBlock, Block block)
+    void SetBlockCoordinatesToGrid(Transform parentBlock, ref Block block)
     {
         ClearPositions(ref block);
+
+        if (block.debugger)
+        {
+            Debug.LogError("qwe");
+        }
 
         foreach (Transform subBlock in parentBlock)
         {
@@ -155,6 +159,10 @@ public class Board : MonoBehaviour
             var coordinates = new Vector2Int(Mathf.RoundToInt(pos.x), Mathf.RoundToInt(pos.y));
             block.blockPositions.Add(coordinates);
             blocksGrid[coordinates.x, coordinates.y] = subBlock;
+            if (block.debugger)
+            {
+                Debug.LogError(block.transform.position + " UwU ");
+            }
         }
     }
 
@@ -166,17 +174,16 @@ public class Board : MonoBehaviour
             var blockFell = false;
             foreach (Transform block in blocksHolder)
             {
-                if (block.transform.position.y == 0) continue;
                 var blockComponent = block.GetComponent<Block>();
                 var canFall = true;
                 foreach (var position in blockComponent.blockPositions)
                 {
-//                    if (position.y == 0)
-//                    {
-//                        // block already at y = 0
-//                        canFall = false;
-//                        break;
-//                    }
+                    if (position.y == 0)
+                    {
+                        // block already at y = 0
+                        canFall = false;
+                        break;
+                    }
 
                     if (blocksGrid[position.x, position.y - 1] != null)
                     {
@@ -193,7 +200,7 @@ public class Board : MonoBehaviour
                 block.transform.position += Vector3.down;
                 // clear pos array, and grid
                 ClearPositions(ref blockComponent);
-                SetBlockCoordinatesToGrid(block, blockComponent);
+                SetBlockCoordinatesToGrid(block, ref blockComponent);
             }
 
             if (blockFell)
@@ -265,7 +272,7 @@ public class Board : MonoBehaviour
         {
             block.transform.position += Vector3.up;
             var blockComponent = block.GetComponent<Block>();
-            SetBlockCoordinatesToGrid(block, blockComponent);
+            SetBlockCoordinatesToGrid(block, ref blockComponent);
         }
 
         var rand = new System.Random();
@@ -276,7 +283,7 @@ public class Board : MonoBehaviour
         var spawnedBlock = Instantiate(blockToSpawn, Vector3.zero, Quaternion.identity, blocksHolder);
         var spawnedBlockComponent = spawnedBlock.GetComponent<Block>();
 
-        SetBlockCoordinatesToGrid(spawnedBlock.transform, spawnedBlockComponent);
+        SetBlockCoordinatesToGrid(spawnedBlock.transform, ref spawnedBlockComponent);
         
         ApplyGravity();
         CheckLines();
