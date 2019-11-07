@@ -21,6 +21,8 @@ public class Board : MonoBehaviour
 
     private Coroutine _blockCoroutine;
 
+    private Score score;
+
     void Start()
     {
         blockLayerID = LayerMask.NameToLayer("block");
@@ -224,8 +226,9 @@ public class Board : MonoBehaviour
                     Destroy(blocksGrid[x, y].gameObject.transform.parent.gameObject);
                     Destroy(blocksGrid[x, y].gameObject);
                     blocksGrid[x, y] = null;
+                    score = FindObjectOfType<Score>();
+                    score.UpdScore(1); 
                 }
-
                 ApplyGravity();
                 break;
             }
