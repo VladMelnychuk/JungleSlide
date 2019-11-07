@@ -166,16 +166,17 @@ public class Board : MonoBehaviour
             var blockFell = false;
             foreach (Transform block in blocksHolder)
             {
+                if (block.transform.position.y == 0) continue;
                 var blockComponent = block.GetComponent<Block>();
                 var canFall = true;
                 foreach (var position in blockComponent.blockPositions)
                 {
-                    if (position.y == 0)
-                    {
-                        // block already at y = 0
-                        canFall = false;
-                        break;
-                    }
+//                    if (position.y == 0)
+//                    {
+//                        // block already at y = 0
+//                        canFall = false;
+//                        break;
+//                    }
 
                     if (blocksGrid[position.x, position.y - 1] != null)
                     {
