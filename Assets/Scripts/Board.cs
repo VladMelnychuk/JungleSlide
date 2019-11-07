@@ -108,19 +108,19 @@ public class Board : MonoBehaviour
 
         if (moveSuccessful)
         {
-            print("moveSuccessful");
+//            print("moveSuccessful");
 
             // update grid
             SetBlockCoordinatesToGrid(block.transform, blockComponent);
 
-//            ApplyGravity();
+            ApplyGravity();
 
-//            CheckLines();
+            CheckLines();
 
             NextTurn();
-
-            _blockCoroutine = null;
         }
+
+        _blockCoroutine = null;
     }
 
     private void ClearPositions(ref Block block)
@@ -130,6 +130,8 @@ public class Board : MonoBehaviour
         {
             blocksGrid[position.x, position.y] = null;
         }
+
+        block.blockPositions.Clear();
     }
 
     private void FillGrid()
@@ -147,7 +149,6 @@ public class Board : MonoBehaviour
     {
         ClearPositions(ref block);
 
-        block.blockPositions.Clear();
         foreach (Transform subBlock in parentBlock)
         {
             var pos = subBlock.transform.position;
@@ -161,7 +162,7 @@ public class Board : MonoBehaviour
     {
         while (true)
         {
-            print("ApplyGravity();");
+//            print("ApplyGravity();");
             var blockFell = false;
             foreach (Transform block in blocksHolder)
             {
@@ -176,18 +177,22 @@ public class Board : MonoBehaviour
                         break;
                     }
 
-                    if (blocksGrid[position.x, position.y - 1] != null) canFall = false;
+                    if (blocksGrid[position.x, position.y - 1] != null)
+                    {
+                        canFall = false;
+                        break;
+                    }
                 }
 
-                if (canFall)
-                {
-                    blockFell = true;
-                    // move block down
-                    block.transform.position += Vector3.down;
-                    ClearBlockCoordinatesOnGrid(blockComponent.blockPositions);
-                    blockComponent.blockPositions.Clear();
-                    SetBlockCoordinatesToGrid(block, blockComponent);
-                }
+                // continue to next block
+                if (!canFall) continue;
+
+                blockFell = true;
+                // move block down
+                block.transform.position += Vector3.down;
+                // clear pos array, and grid
+                ClearPositions(ref blockComponent);
+                SetBlockCoordinatesToGrid(block, blockComponent);
             }
 
             if (blockFell)
@@ -196,14 +201,6 @@ public class Board : MonoBehaviour
             }
 
             break;
-        }
-    }
-
-    private static void ClearBlockCoordinatesOnGrid(List<Vector2Int> oldCoordinates)
-    {
-        foreach (var oldCoordinate in oldCoordinates)
-        {
-            blocksGrid[oldCoordinate.x, oldCoordinate.y] = null;
         }
     }
 
@@ -223,6 +220,7 @@ public class Board : MonoBehaviour
                 print("lineFound");
                 for (int x = 0; x < width; x++)
                 {
+                    Destroy(blocksGrid[x, y].gameObject.transform.parent.gameObject);
                     Destroy(blocksGrid[x, y].gameObject);
                     blocksGrid[x, y] = null;
                 }
@@ -278,5 +276,8 @@ public class Board : MonoBehaviour
         var spawnedBlockComponent = spawnedBlock.GetComponent<Block>();
 
         SetBlockCoordinatesToGrid(spawnedBlock.transform, spawnedBlockComponent);
+        
+        ApplyGravity();
+        CheckLines();
     }
 }
