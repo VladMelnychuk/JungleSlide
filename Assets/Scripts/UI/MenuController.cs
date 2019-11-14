@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 public class MenuController : MonoBehaviour
@@ -13,6 +11,9 @@ public class MenuController : MonoBehaviour
     [SerializeField] private GameObject mainMenu;
     [SerializeField] private GameObject levelMenu;
 
+    [SerializeField] private RectTransform settingsMenu;
+    [SerializeField] private RectTransform shopMenu;
+
     private void Start()
     {
         DontDestroyOnLoad(this);
@@ -24,17 +25,33 @@ public class MenuController : MonoBehaviour
     private void AddListeners()
     {
         startGameButton.onClick.AddListener(ChooseLevel);
+        settingsButton.onClick.AddListener(OpenSetings);
+        shopButton.onClick.AddListener(OpenShop);
     }
 
     private void ChooseLevel()
     {
-        mainMenu.SetActive(false);
         levelMenu.SetActive(true);
     }
 
     public void LoadLevel()
     {
         LevelLoader.LoadLevel();
+    }
+
+    private void OpenSetings()
+    {
+        settingsMenu.gameObject.SetActive(true);
+    }
+
+    private void OpenShop()
+    {
+        shopMenu.gameObject.SetActive(true);
+    }
+
+    private void ShowMenu(RectTransform menu)
+    {
+        
     }
     
 }
