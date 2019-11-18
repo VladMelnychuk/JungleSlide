@@ -38,6 +38,7 @@ public class Board : MonoBehaviour
     void Update()
     {
         if (PauseController.IsPaused) return;
+        
         if (Input.GetKeyDown(KeyCode.Space)) DebugGrid();
         Debug.DrawRay(oldpos, Camera.main.transform.forward * 20, Color.white, 10f);
 

@@ -8,11 +8,14 @@ public class MenuController : MonoBehaviour
     [SerializeField] private Button settingsButton; 
     [SerializeField] private Button shopButton;
 
-    [SerializeField] private GameObject mainMenu;
-    [SerializeField] private GameObject levelMenu;
+    #region Menus
 
+    [SerializeField] private RectTransform mainMenu;
+    [SerializeField] private RectTransform levelMenu;
     [SerializeField] private RectTransform settingsMenu;
     [SerializeField] private RectTransform shopMenu;
+    
+    #endregion
 
     private void Start()
     {
@@ -24,14 +27,9 @@ public class MenuController : MonoBehaviour
 
     private void AddListeners()
     {
-        startGameButton.onClick.AddListener(ChooseLevel);
-        settingsButton.onClick.AddListener(OpenSetings);
-        shopButton.onClick.AddListener(OpenShop);
-    }
-
-    private void ChooseLevel()
-    {
-        levelMenu.SetActive(true);
+        startGameButton.onClick.AddListener(() => OpenPanel(levelMenu));
+        settingsButton.onClick.AddListener(() => OpenPanel(settingsMenu));
+        shopButton.onClick.AddListener(() => OpenPanel(shopMenu));
     }
 
     public void LoadLevel()
@@ -39,19 +37,8 @@ public class MenuController : MonoBehaviour
         LevelLoader.LoadLevel();
     }
 
-    private void OpenSetings()
+    private void OpenPanel(RectTransform panel)
     {
-        settingsMenu.gameObject.SetActive(true);
+        panel.gameObject.SetActive(true);
     }
-
-    private void OpenShop()
-    {
-        shopMenu.gameObject.SetActive(true);
-    }
-
-    private void ShowMenu(RectTransform menu)
-    {
-        
-    }
-    
 }
