@@ -1,220 +1,174 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
-using Random = UnityEngine.Random;
+using System.Text;
+using UnityRandom = UnityEngine.Random;
 
 public class Board : MonoBehaviour
 {
-    // Height and width of game board
-    public int width;
-    public int height;
-    public GameObject tilePrefab;
-    public GameObject[] blocks;
-    private BackgroundTile[,] allTiles;
+    [SerializeField] private int width;
+    [SerializeField] private int height;
 
-    private static Block[,] _blocksGrid;
-    [SerializeField] private List<Block> blocksList;
-    [SerializeField] private Transform blocksHolder; 
+    [SerializeField] private Transform blocksHolder;
+    public List<Block> activeBlocksList = new List<Block>();
 
-    private int _blockLayerId = 8;
+    private static Block[,] _grid;
 
-    private Coroutine _blockCoroutine;
+    [SerializeField] private int blockLayerId = 8;
 
-    private Score score;
-
-    void Start()
+    private void Start()
     {
-        Input.multiTouchEnabled = false;
-
-        _blockLayerId = LayerMask.NameToLayer("block");
-
-        allTiles = new BackgroundTile [width, height];
-
-        _blocksGrid = new Block[width, height];
-
+        blockLayerId = LayerMask.NameToLayer("block");
+        _grid = new Block[width, height];
         FillGrid();
     }
 
-    Vector3 oldpos = Vector3.zero;
-
-    void Update()
+    private void Update()
     {
         if (Input.GetKeyDown(KeyCode.Space)) DebugGrid();
 
         if (!Input.GetMouseButtonDown(0)) return;
-        if (_blockCoroutine != null) return;
 
         var pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        oldpos = pos;
         var hit = Physics2D.Raycast(pos, Vector2.zero);
-        if (hit.collider && hit.collider.gameObject.layer == _blockLayerId)
+        if (hit.collider && hit.collider.gameObject.layer == blockLayerId)
         {
-            _blockCoroutine = StartCoroutine(MovingBlock(hit.collider.gameObject));
+            StartCoroutine(MovingBlock(hit.collider.gameObject));
         }
     }
 
-    private void SetUp()
+    #region BlockMoving
+
+    private IEnumerator MovingBlock(GameObject blockGameObject)
     {
-    }
+        var gameObjectPos = blockGameObject.transform.position;
+        var blockInitPosition = new Vector2Int(Mathf.RoundToInt(gameObjectPos.x), Mathf.RoundToInt(gameObjectPos.y));
 
-    IEnumerator MovingBlock(GameObject block)
-    {
-        var startingPos = block.transform.position;
-        var blockComponent = block.GetComponent<Block>();
+        var block = _grid[blockInitPosition.x, blockInitPosition.y];
 
-        ClearPositions(blockComponent);
+        var borders = GetBorders(block);
 
-        var moveSuccessful = false;
         while (Input.GetMouseButton(0))
         {
-            // current new position of a parent block
-            var newPos = block.transform.position;
-
             var newX = Mathf.RoundToInt(Camera.main.ScreenToWorldPoint(Input.mousePosition).x);
 
-            if (newX >= width) newX = width - 1;
-            else if (newX < 0) newX = 0;
-
-            newPos.x = newX;
-
-            if (IsMoveValid(blockComponent, newX, Mathf.RoundToInt(newPos.y)))
+            if (newX >= borders.x && newX <= borders.y)
             {
-                // move successful
-                moveSuccessful = true;
+                // can move
+                var newPos = new Vector3(newX, block.gridPosition.y, 0);
                 block.transform.position = newPos;
-            }
-            else
-            {
-                moveSuccessful = false;
             }
 
             yield return null;
         }
 
-
-        moveSuccessful = startingPos != block.transform.position;
-
-
-        if (moveSuccessful)
+        if (gameObjectPos != block.transform.position)
         {
-            // update grid
-            SetBlockCoordinatesToGrid(blockComponent);
+            // move completed
+            MoveBlockInGrid(block, Vector3ToVector2Int(block.transform.position));
+        }
+    }
 
-            ApplyGravity();
-
-            CheckLines();
-
-            NextTurn();
+    private void MoveBlockInGrid(Block block, Vector2Int newPos)
+    {
+        // set old positions to null
+        for (int i = block.gridPosition.x; i < block.size + block.gridPosition.x; i++)
+        {
+            _grid[i, block.gridPosition.y] = null;
         }
 
-        _blockCoroutine = null;
+        // set new position
+        AddBlockToGrid(block, newPos.x);
+        
+        block.gridPosition.x = newPos.x;
+        block.gridPosition.y = newPos.y;
+
+        // TODO move block in UI
+    }
+
+    private Vector2Int GetBorders(Block block)
+    {
+        // x = left, y = right
+        var borders = new Vector2Int(0, width - block.size);
+
+        // get left border
+        for (int left = block.gridPosition.x; left >= 0; left--)
+        {
+            if (_grid[left, block.gridPosition.y] == null) continue;
+            if (_grid[left, block.gridPosition.y] != block)
+            {
+                borders.x = left + 1;
+                break;
+            }
+        }
+
+        // get right border
+        for (int right = block.size + block.gridPosition.x - 1; right < width; right++)
+        {
+            if (_grid[right, block.gridPosition.y] == null) continue;
+            if (_grid[right, block.gridPosition.y] != block)
+            {
+                borders.y = right - block.size;
+                break;
+            }
+        }
+
+        return borders;
+    }
+
+    #endregion
+
+    private void AddBlockToGrid(Block block, int newX)
+    {
+        for (int i = newX; i < block.size + newX; i++)
+        {
+            _grid[i, block.gridPosition.y] = block;
+        }
+
+        var position = block.transform.position;
+        block.gridPosition.x = Mathf.RoundToInt(position.x);
+        block.gridPosition.y = Mathf.RoundToInt(position.y);
     }
 
     private void FillGrid()
     {
-        Array.Clear(_blocksGrid, 0, _blocksGrid.Length);
-
-        foreach (Block block in blocksList)
+        foreach (Transform blockTransform in blocksHolder)
         {
-            SetBlockCoordinatesToGrid(block);
-        }
-    }
-
-    void SetBlockCoordinatesToGrid(Block block)
-    {
-        ClearPositions(block);
-
-        foreach (Transform subBlock in block.transform)
-        {
-            var pos = subBlock.transform.position;
-            var coordinates = new Vector2Int(Mathf.RoundToInt(pos.x), Mathf.RoundToInt(pos.y));
-            block.blockPositions.Add(coordinates);
-            _blocksGrid[coordinates.x, coordinates.y] = block;
-        }
-    }
-
-    private void ClearPositions(Block block)
-    {
-        // clear positions on grid from block's vector array
-        foreach (var position in block.blockPositions)
-        {
-            _blocksGrid[position.x, position.y] = null;
+            activeBlocksList.Add(blockTransform.GetComponent<Block>());
         }
 
-        block.blockPositions.Clear();
+        foreach (var block in activeBlocksList)
+        {
+            AddBlockToGrid(block, Mathf.RoundToInt(block.transform.position.x));
+        }
     }
 
     private void ApplyGravity()
     {
-        while (true)
+        foreach (var block in activeBlocksList)
         {
-            var blockFell = false;
-            foreach (var block in blocksList)
+            var blockPos = block.gridPosition;
+            
+            // block already at y = 0    
+            if (blockPos.y == 0) continue;
+
+            bool canFall = true;
+            
+            for (int i = 0; i < block.size; i++)
             {
-                var canFall = true;
-                foreach (var position in block.blockPositions)
+                if (_grid[blockPos.x, blockPos.y - 1] != null)
                 {
-                    if (position.y == 0)
-                    {
-                        // block already at y = 0
-                        canFall = false;
-                        break;
-                    }
-
-                    if (_blocksGrid[position.x, position.y - 1] != null)
-                    {
-                        canFall = false;
-                        break;
-                    }
+                    canFall = false;
+                    break;
                 }
-
-                // continue to next block
-                if (!canFall) continue;
-
-                blockFell = true;
-                // move block down
-                block.transform.position += Vector3.down;
-                // clear pos array, and grid
-                SetBlockCoordinatesToGrid(block);
             }
 
-            if (blockFell)
+            if (canFall)
             {
-                continue;
+                block.gridPosition.y -= 1;
+                MoveBlockInGrid(block, block.gridPosition);
             }
-
-            break;
-        }
-    }
-
-    private void CheckLines()
-    {
-        for (int y = 0; y < height; y++)
-        {
-            var lineFound = true;
-            for (int x = 0; x < width; x++)
-            {
-                // TODO match block types later
-                if (_blocksGrid[x, y] == null) lineFound = false;
-            }
-
-            if (lineFound)
-            {
-                print("lineFound");
-                for (int x = 0; x < width; x++)
-                {
-                    Destroy(_blocksGrid[x, y].gameObject.transform.parent.gameObject);
-                    Destroy(_blocksGrid[x, y].gameObject);
-                    _blocksGrid[x, y] = null;
-                    score = FindObjectOfType<Score>();
-                    score.UpdScore(1);
-                }
-
-                ApplyGravity();
-                break;
-            }
+            
         }
     }
 
@@ -225,7 +179,7 @@ public class Board : MonoBehaviour
         {
             for (int x = 0; x < width; x++)
             {
-                stringBuilder.Append(_blocksGrid[x, y] == null ? " . " : "X ");
+                stringBuilder.Append(_grid[x, y] == null ? " . " : "X ");
             }
 
             stringBuilder.Append("\n");
@@ -234,36 +188,9 @@ public class Board : MonoBehaviour
         Debug.Log(stringBuilder.ToString());
     }
 
-    private bool IsMoveValid(Block block, int newX, int y)
+    private Vector2Int Vector3ToVector2Int(Vector3 vector3)
     {
-        for (int x = newX; x < newX + block.size; x++)
-        {
-            if (x >= width) return false;
-            if (_blocksGrid[x, y] != null) return false;
-        }
-
-        return true;
+        return new Vector2Int(Mathf.RoundToInt(vector3.x), Mathf.RoundToInt(vector3.y));
     }
-
-    private void NextTurn()
-    {
-        foreach (var block in blocksList)
-        {
-            block.transform.position += Vector3.up;
-            SetBlockCoordinatesToGrid(block);
-        }
-
-        var rand = new System.Random();
-        var index = rand.Next(0, blocks.Length - 1);
-
-        var blockToSpawn = blocks[index];
-
-        var spawnedBlock = Instantiate(blockToSpawn, Vector3.zero, Quaternion.identity, blocksHolder);
-        var spawnedBlockComponent = spawnedBlock.GetComponent<Block>(); // TODO remove
-
-        SetBlockCoordinatesToGrid(spawnedBlockComponent);
-
-        ApplyGravity();
-        CheckLines();
-    }
+    
 }
