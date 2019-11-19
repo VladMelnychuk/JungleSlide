@@ -45,6 +45,7 @@ public class Board : MonoBehaviour
         var blockInitPosition = new Vector2Int(Mathf.RoundToInt(gameObjectPos.x), Mathf.RoundToInt(gameObjectPos.y));
 
         var block = _grid[blockInitPosition.x, blockInitPosition.y];
+        Debug.LogError("hit " + blockGameObject.name + " at " + blockInitPosition.x + " : " + blockInitPosition.y);
 
         var borders = GetBorders(block);
 
@@ -66,6 +67,7 @@ public class Board : MonoBehaviour
         {
             // move completed
             MoveBlockInGrid(block, Vector3ToVector2Int(block.transform.position));
+            ApplyGravity();
         }
     }
 
@@ -78,12 +80,13 @@ public class Board : MonoBehaviour
         }
 
         // set new position
-        AddBlockToGrid(block, newPos.x);
+        AddBlockToGrid(block, newPos);
         
         block.gridPosition.x = newPos.x;
         block.gridPosition.y = newPos.y;
 
         // TODO move block in UI
+        block.transform.position = new Vector3(block.gridPosition.x, block.gridPosition.y, 0);
     }
 
     private Vector2Int GetBorders(Block block)
@@ -118,16 +121,14 @@ public class Board : MonoBehaviour
 
     #endregion
 
-    private void AddBlockToGrid(Block block, int newX)
+    private void AddBlockToGrid(Block block, Vector2Int newPos)
     {
-        for (int i = newX; i < block.size + newX; i++)
+        for (int i = newPos.x; i < block.size + newPos.x; i++)
         {
-            _grid[i, block.gridPosition.y] = block;
+            _grid[i, newPos.y] = block;
         }
 
-        var position = block.transform.position;
-        block.gridPosition.x = Mathf.RoundToInt(position.x);
-        block.gridPosition.y = Mathf.RoundToInt(position.y);
+        block.gridPosition = Vector3ToVector2Int(block.transform.position);
     }
 
     private void FillGrid()
@@ -139,7 +140,7 @@ public class Board : MonoBehaviour
 
         foreach (var block in activeBlocksList)
         {
-            AddBlockToGrid(block, Mathf.RoundToInt(block.transform.position.x));
+            AddBlockToGrid(block, block.gridPosition);
         }
     }
 
@@ -165,8 +166,10 @@ public class Board : MonoBehaviour
 
             if (canFall)
             {
-                block.gridPosition.y -= 1;
-                MoveBlockInGrid(block, block.gridPosition);
+//                block.gridPosition.y -= 1;
+                var newPos = block.gridPosition;
+                newPos.y -= 1;
+                MoveBlockInGrid(block, newPos);
             }
             
         }
