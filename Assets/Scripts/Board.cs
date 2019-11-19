@@ -68,20 +68,18 @@ public class Board : MonoBehaviour
             // move completed
             MoveBlockInGrid(block, Vector3ToVector2Int(block.transform.position));
             ApplyGravity();
+            CheckLines();
         }
     }
 
     private void MoveBlockInGrid(Block block, Vector2Int newPos)
     {
-        // set old positions to null
-        for (int i = block.gridPosition.x; i < block.size + block.gridPosition.x; i++)
-        {
-            _grid[i, block.gridPosition.y] = null;
-        }
+        // set old positions to null aka remove from grid
+        RemoveBlockFromGrid(block);
 
         // set new position
         AddBlockToGrid(block, newPos);
-        
+
         block.gridPosition.x = newPos.x;
         block.gridPosition.y = newPos.y;
 
@@ -131,6 +129,14 @@ public class Board : MonoBehaviour
         block.gridPosition = Vector3ToVector2Int(block.transform.position);
     }
 
+    private void RemoveBlockFromGrid(Block block)
+    {
+        for (int i = block.gridPosition.x; i < block.size + block.gridPosition.x; i++)
+        {
+            _grid[i, block.gridPosition.y] = null;
+        }
+    }
+
     private void FillGrid()
     {
         foreach (Transform blockTransform in blocksHolder)
@@ -146,32 +152,71 @@ public class Board : MonoBehaviour
 
     private void ApplyGravity()
     {
-        foreach (var block in activeBlocksList)
+        while (true)
         {
-            var blockPos = block.gridPosition;
-            
-            // block already at y = 0    
-            if (blockPos.y == 0) continue;
-
-            bool canFall = true;
-            
-            for (int i = 0; i < block.size; i++)
+            var blockFell = false;
+            foreach (var block in activeBlocksList)
             {
-                if (_grid[blockPos.x, blockPos.y - 1] != null)
+                var blockPos = block.gridPosition;
+
+                // block already at y = 0    
+                if (blockPos.y == 0) continue;
+
+                bool canFall = true;
+
+                for (int i = 0; i < block.size; i++)
                 {
-                    canFall = false;
-                    break;
+                    if (_grid[blockPos.x, blockPos.y - 1] != null)
+                    {
+                        canFall = false;
+                        break;
+                    }
+                }
+
+                if (canFall)
+                {
+                    blockFell = true;
+                    var newPos = block.gridPosition;
+                    newPos.y -= 1;
+                    MoveBlockInGrid(block, newPos);
                 }
             }
 
-            if (canFall)
+            if (blockFell) continue;
+
+            break;
+        }
+    }
+
+    private void CheckLines()
+    {
+        for (int y = 0; y < height; y++)
+        {
+            var lineFound = true;
+            for (int x = 0; x < width; x++)
             {
-//                block.gridPosition.y -= 1;
-                var newPos = block.gridPosition;
-                newPos.y -= 1;
-                MoveBlockInGrid(block, newPos);
+                // TODO match block types
+                if (_grid[x, y] == null) lineFound = false;
             }
-            
+
+            if (lineFound)
+            {
+                print("lineFound");
+
+                var xIndex = 0;
+
+                while (xIndex < width)
+                {
+                    var block = _grid[xIndex, y];
+                    RemoveBlockFromGrid(block);
+                    xIndex += block.size;
+
+                    // TODO Object pool
+                    Destroy(block.gameObject);
+                }
+
+                ApplyGravity();
+            }
         }
     }
 
@@ -195,5 +240,4 @@ public class Board : MonoBehaviour
     {
         return new Vector2Int(Mathf.RoundToInt(vector3.x), Mathf.RoundToInt(vector3.y));
     }
-    
 }
