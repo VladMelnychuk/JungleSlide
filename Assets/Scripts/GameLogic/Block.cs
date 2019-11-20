@@ -1,22 +1,24 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class Block : MonoBehaviour
+public class Block : MonoBehaviour, ISpawnEvent
 {
-//    public BlockTypes blockType;
-    public List<Vector2Int> blockPositions = new List<Vector2Int>();
+    public Vector2Int gridPosition;
+    public Vector2Int gridNewPosition;
+
     public int size = 1;
     
-    Vector3 oldPos = Vector3.zero;
+    public ObjectPool pool;
 
-    public bool debugger = false;
-    
-    private void Update()
+    private void OnEnable()
     {
-        if (!debugger) return;
-        if (transform.position == oldPos) return;
-            
-        oldPos = transform.position;
-        Debug.LogError(oldPos);
+        var position = transform.position;
+        gridPosition = new Vector2Int(Mathf.RoundToInt(position.x), Mathf.RoundToInt(position.y));
+    }
+
+    public void OnSpawned(GameObject targetGameObject, ObjectPool sender)
+    {
+        pool = sender;
     }
 }

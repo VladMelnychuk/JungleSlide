@@ -21,6 +21,8 @@ public class MenuController : MonoBehaviour
     {
         DontDestroyOnLoad(this);
         
+        var sa = Screen.safeArea;
+
         AddListeners();
     }
 
