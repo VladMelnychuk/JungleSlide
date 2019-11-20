@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-public class Time : MonoBehaviour
+public class PlayTime : MonoBehaviour
 {
 	private TMP_Text timeBox;
 	public float timeStart;

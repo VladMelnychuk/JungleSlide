@@ -45,6 +45,8 @@ public class Board : MonoBehaviour
 
     private void Update()
     {
+        if (PauseController.IsPaused) return;
+        
         if (Input.GetKeyDown(KeyCode.Space)) DebugGrid();
 
         if (!Input.GetMouseButtonDown(0)) return;

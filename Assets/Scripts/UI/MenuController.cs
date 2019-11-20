@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 public class MenuController : MonoBehaviour
@@ -10,8 +8,14 @@ public class MenuController : MonoBehaviour
     [SerializeField] private Button settingsButton; 
     [SerializeField] private Button shopButton;
 
-    [SerializeField] private GameObject mainMenu;
-    [SerializeField] private GameObject levelMenu;
+    #region Menus
+
+    [SerializeField] private RectTransform mainMenu;
+    [SerializeField] private RectTransform levelMenu;
+    [SerializeField] private RectTransform settingsMenu;
+    [SerializeField] private RectTransform shopMenu;
+    
+    #endregion
 
     private void Start()
     {
@@ -25,18 +29,18 @@ public class MenuController : MonoBehaviour
 
     private void AddListeners()
     {
-        startGameButton.onClick.AddListener(ChooseLevel);
-    }
-
-    private void ChooseLevel()
-    {
-        mainMenu.SetActive(false);
-        levelMenu.SetActive(true);
+        startGameButton.onClick.AddListener(() => OpenPanel(levelMenu));
+        settingsButton.onClick.AddListener(() => OpenPanel(settingsMenu));
+        shopButton.onClick.AddListener(() => OpenPanel(shopMenu));
     }
 
     public void LoadLevel()
     {
         LevelLoader.LoadLevel();
     }
-    
+
+    private void OpenPanel(RectTransform panel)
+    {
+        panel.gameObject.SetActive(true);
+    }
 }
