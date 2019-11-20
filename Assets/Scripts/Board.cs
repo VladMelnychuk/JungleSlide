@@ -15,12 +15,20 @@ public class Board : MonoBehaviour
     private static Block[,] _grid;
 
     [SerializeField] private int blockLayerId = 8;
+    [SerializeField] private GameObject[] blocks;
+    private DictionaryObjectPool _objectpool;
 
     private void Start()
     {
-        blockLayerId = LayerMask.NameToLayer("block");
+        _objectpool = new DictionaryObjectPool();
+        
         _grid = new Block[width, height];
+        
+        blockLayerId = LayerMask.NameToLayer("block");
+        
         FillGrid();
+        
+        SortBlocks();
     }
 
     private void Update()
@@ -36,8 +44,6 @@ public class Board : MonoBehaviour
             StartCoroutine(MovingBlock(hit.collider.gameObject));
         }
     }
-
-    #region BlockMoving
 
     private IEnumerator MovingBlock(GameObject blockGameObject)
     {
@@ -69,23 +75,51 @@ public class Board : MonoBehaviour
             MoveBlockInGrid(block, Vector3ToVector2Int(block.transform.position));
             ApplyGravity();
             CheckLines();
+
+            NextTurn();
         }
     }
 
+    #region Grid Logic
+
     private void MoveBlockInGrid(Block block, Vector2Int newPos)
     {
+
+        if (newPos.y >= height)
+        {
+            Debug.LogError("Game Over");
+            return;
+        }
+        
         // set old positions to null aka remove from grid
         RemoveBlockFromGrid(block);
 
         // set new position
         AddBlockToGrid(block, newPos);
 
-        block.gridPosition.x = newPos.x;
-        block.gridPosition.y = newPos.y;
+        block.gridPosition = newPos;
 
         // TODO move block in UI
         block.transform.position = new Vector3(block.gridPosition.x, block.gridPosition.y, 0);
     }
+
+    private void AddBlockToGrid(Block block, Vector2Int newPos)
+    {
+        for (int i = newPos.x; i < newPos.x + block.size; i++)
+        {
+            _grid[i, newPos.y] = block;
+        }
+    }
+
+    private void RemoveBlockFromGrid(Block block)
+    {
+        for (int i = block.gridPosition.x; i < block.gridPosition.x + block.size; i++)
+        {
+            _grid[i, block.gridPosition.y] = null;
+        }
+    }
+
+    #endregion
 
     private Vector2Int GetBorders(Block block)
     {
@@ -117,26 +151,6 @@ public class Board : MonoBehaviour
         return borders;
     }
 
-    #endregion
-
-    private void AddBlockToGrid(Block block, Vector2Int newPos)
-    {
-        for (int i = newPos.x; i < block.size + newPos.x; i++)
-        {
-            _grid[i, newPos.y] = block;
-        }
-
-        block.gridPosition = Vector3ToVector2Int(block.transform.position);
-    }
-
-    private void RemoveBlockFromGrid(Block block)
-    {
-        for (int i = block.gridPosition.x; i < block.size + block.gridPosition.x; i++)
-        {
-            _grid[i, block.gridPosition.y] = null;
-        }
-    }
-
     private void FillGrid()
     {
         foreach (Transform blockTransform in blocksHolder)
@@ -150,41 +164,52 @@ public class Board : MonoBehaviour
         }
     }
 
+    #region Game Logic
+
     private void ApplyGravity()
     {
         while (true)
         {
             var blockFell = false;
-            foreach (var block in activeBlocksList)
+
+            for (int y = height - 1; y > 0; y--)
             {
-                var blockPos = block.gridPosition;
-
-                // block already at y = 0    
-                if (blockPos.y == 0) continue;
-
-                bool canFall = true;
-
-                for (int i = 0; i < block.size; i++)
+                for (int x = 0; x < width;)
                 {
-                    if (_grid[blockPos.x, blockPos.y - 1] != null)
+                    if (_grid[x, y] == null)
                     {
-                        canFall = false;
-                        break;
+                        x += 1;
+                        continue;
                     }
-                }
 
-                if (canFall)
-                {
-                    blockFell = true;
-                    var newPos = block.gridPosition;
-                    newPos.y -= 1;
-                    MoveBlockInGrid(block, newPos);
+                    var block = _grid[x, y];
+                    var blockPos = block.gridPosition;
+                    var newY = blockPos.y - 1;
+                    x += block.size;
+
+                    bool canFall = true;
+                    
+                    for (int i = 0; i < block.size; i++)
+                    {
+                        if (_grid[blockPos.x + i, newY] != null)
+                        {
+                            canFall = false;
+                            break;
+                        }
+                    }
+                    
+                    if (canFall)
+                    {
+                        blockFell = true;
+                        var newPos = block.gridPosition;
+                        newPos.y -= 1;
+                        MoveBlockInGrid(block, newPos);
+                    }
+
                 }
             }
-
-            if (blockFell) continue;
-
-            break;
+            
+            if (!blockFell) break;
         }
     }
 
@@ -196,12 +221,18 @@ public class Board : MonoBehaviour
             for (int x = 0; x < width; x++)
             {
                 // TODO match block types
-                if (_grid[x, y] == null) lineFound = false;
+                if (_grid[x, y] == null)
+                {
+                    lineFound = false;
+                    break;
+                }
             }
 
             if (lineFound)
             {
                 print("lineFound");
+                
+                DebugGrid();
 
                 var xIndex = 0;
 
@@ -213,6 +244,7 @@ public class Board : MonoBehaviour
 
                     // TODO Object pool
                     Destroy(block.gameObject);
+//                    block.pool.Despawn(block.gameObject);
                 }
 
                 ApplyGravity();
@@ -220,7 +252,58 @@ public class Board : MonoBehaviour
         }
     }
 
-    void DebugGrid()
+    private void NextTurn()
+    {
+        for (int y = (height - 1); y >= 0; y--)
+        {
+            for (int x = 0; x < width;)
+            {
+                if (_grid[x, y] != null)
+                {
+                    var block = _grid[x, y];
+                    x += block.size;
+                    var newPos = block.gridPosition;
+                    newPos.y += 1;
+                    MoveBlockInGrid(block, newPos);
+                }
+                else x++;
+            }
+        }
+
+        DebugGrid();
+
+        var rand = new System.Random();
+        var index = rand.Next(0, blocks.Length - 1);
+
+        var blockToSpawn = blocks[index];
+
+        var spawnedBlock = Instantiate(blockToSpawn, Vector3.zero, Quaternion.identity, blocksHolder);
+        var spawnedBlockComponent = spawnedBlock.GetComponent<Block>();
+        
+        activeBlocksList.Add(spawnedBlockComponent);
+        
+        AddBlockToGrid(spawnedBlockComponent, spawnedBlockComponent.gridPosition);
+
+        ApplyGravity();
+        CheckLines();
+    }
+
+    private void SortBlocks()
+    {
+        activeBlocksList.Sort(delegate(Block block1, Block block2)
+        {
+            if (block1.gridPosition.y > block2.gridPosition.y)
+            {
+                return -1;
+            }
+            return 1;
+        });
+    }
+
+    #endregion
+
+
+    private void DebugGrid()
     {
         StringBuilder stringBuilder = new StringBuilder();
         for (int y = 0; y < height; y++)
@@ -236,7 +319,7 @@ public class Board : MonoBehaviour
         Debug.Log(stringBuilder.ToString());
     }
 
-    private Vector2Int Vector3ToVector2Int(Vector3 vector3)
+    private static Vector2Int Vector3ToVector2Int(Vector3 vector3)
     {
         return new Vector2Int(Mathf.RoundToInt(vector3.x), Mathf.RoundToInt(vector3.y));
     }

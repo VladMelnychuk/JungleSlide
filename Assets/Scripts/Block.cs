@@ -2,15 +2,23 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Block : MonoBehaviour
+public class Block : MonoBehaviour, ISpawnEvent
 {
     public Vector2Int gridPosition;
     public Vector2Int gridNewPosition;
 
     public int size = 1;
+    
+    public ObjectPool pool;
 
     private void OnEnable()
     {
-        gridPosition = new Vector2Int(Mathf.RoundToInt(transform.position.x), Mathf.RoundToInt(transform.position.y));
+        var position = transform.position;
+        gridPosition = new Vector2Int(Mathf.RoundToInt(position.x), Mathf.RoundToInt(position.y));
+    }
+
+    public void OnSpawned(GameObject targetGameObject, ObjectPool sender)
+    {
+        pool = sender;
     }
 }
