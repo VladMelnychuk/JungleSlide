@@ -15,12 +15,24 @@ public class Board : MonoBehaviour
     private static Block[,] _grid;
 
     [SerializeField] private int blockLayerId = 8;
-    [SerializeField] private GameObject[] blocks;
+    [SerializeField] private Block[] blocks;
     private DictionaryObjectPool _objectpool;
+    
+    private void ObjectPoolSetup()
+    {
+        _objectpool = new DictionaryObjectPool();
+        foreach (var block in blocks)
+        {
+            var blockGameObject = block.gameObject;
+            _objectpool.AddObjectPool(blockGameObject.name, blockGameObject, blocksHolder, 20);
+        }
+
+        _objectpool["1x1- Air"].Spawn(Vector3.zero);
+    }
 
     private void Start()
     {
-        _objectpool = new DictionaryObjectPool();
+        ObjectPoolSetup();
         
         _grid = new Block[width, height];
         
@@ -155,7 +167,10 @@ public class Board : MonoBehaviour
     {
         foreach (Transform blockTransform in blocksHolder)
         {
-            activeBlocksList.Add(blockTransform.GetComponent<Block>());
+            if (blockTransform.gameObject.activeSelf)
+            {
+                activeBlocksList.Add(blockTransform.GetComponent<Block>());
+            }
         }
 
         foreach (var block in activeBlocksList)
@@ -277,7 +292,8 @@ public class Board : MonoBehaviour
 
         var blockToSpawn = blocks[index];
 
-        var spawnedBlock = Instantiate(blockToSpawn, Vector3.zero, Quaternion.identity, blocksHolder);
+        var spawnedBlock = _objectpool[blockToSpawn.gameObject.name].Spawn(Vector3.zero);
+        
         var spawnedBlockComponent = spawnedBlock.GetComponent<Block>();
         
         activeBlocksList.Add(spawnedBlockComponent);
