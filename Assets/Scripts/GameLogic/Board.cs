@@ -10,7 +10,7 @@ public class Board : MonoBehaviour
     [SerializeField] private int height;
 
     [SerializeField] private Transform blocksHolder;
-    public List<Block> activeBlocksList = new List<Block>();
+//    public List<Block> activeBlocksList = new List<Block>();
 
     private static Block[,] _grid;
 
@@ -27,20 +27,19 @@ public class Board : MonoBehaviour
             _objectpool.AddObjectPool(blockGameObject.name, blockGameObject, blocksHolder, 20);
         }
 
-        _objectpool["1x1- Air"].Spawn(Vector3.zero);
+        // generating level
+        var block1 = _objectpool["1x1- Air"].Spawn(Vector3.zero);
+        var blockComponent = block1.GetComponent<Block>();
+        blockComponent.gridPosition = Vector2Int.zero;
+        AddBlockToGrid(blockComponent, Vector2Int.zero);
     }
 
     private void Start()
     {
-        ObjectPoolSetup();
-        
         _grid = new Block[width, height];
-        
         blockLayerId = LayerMask.NameToLayer("block");
         
-        FillGrid();
-        
-        SortBlocks();
+        ObjectPoolSetup();
     }
 
     private void Update()
@@ -164,23 +163,7 @@ public class Board : MonoBehaviour
 
         return borders;
     }
-
-    private void FillGrid()
-    {
-        foreach (Transform blockTransform in blocksHolder)
-        {
-            if (blockTransform.gameObject.activeSelf)
-            {
-                activeBlocksList.Add(blockTransform.GetComponent<Block>());
-            }
-        }
-
-        foreach (var block in activeBlocksList)
-        {
-            AddBlockToGrid(block, block.gridPosition);
-        }
-    }
-
+    
     #region Game Logic
 
     private void ApplyGravity()
@@ -297,25 +280,11 @@ public class Board : MonoBehaviour
         var spawnedBlock = _objectpool[blockToSpawn.gameObject.name].Spawn(Vector3.zero);
         
         var spawnedBlockComponent = spawnedBlock.GetComponent<Block>();
-        
-        activeBlocksList.Add(spawnedBlockComponent);
-        
+
         AddBlockToGrid(spawnedBlockComponent, spawnedBlockComponent.gridPosition);
 
         ApplyGravity();
         CheckLines();
-    }
-
-    private void SortBlocks()
-    {
-        activeBlocksList.Sort(delegate(Block block1, Block block2)
-        {
-            if (block1.gridPosition.y > block2.gridPosition.y)
-            {
-                return -1;
-            }
-            return 1;
-        });
     }
 
     #endregion
