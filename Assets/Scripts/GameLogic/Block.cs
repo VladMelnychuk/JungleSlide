@@ -5,7 +5,6 @@ using UnityEngine;
 public class Block : MonoBehaviour, ISpawnEvent
 {
     public Vector2Int gridPosition;
-    public Vector2Int gridNewPosition;
 
     public int size = 1;
     
@@ -21,4 +20,10 @@ public class Block : MonoBehaviour, ISpawnEvent
     {
         pool = sender;
     }
+
+    public void Despawn()
+    {
+        pool.Despawn(this.gameObject);
+    }
+    
 }

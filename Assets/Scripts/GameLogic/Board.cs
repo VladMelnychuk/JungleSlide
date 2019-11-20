@@ -243,8 +243,7 @@ public class Board : MonoBehaviour
                     xIndex += block.size;
 
                     // TODO Object pool
-                    Destroy(block.gameObject);
-//                    block.pool.Despawn(block.gameObject);
+                    block.Despawn();
                 }
 
                 ApplyGravity();
