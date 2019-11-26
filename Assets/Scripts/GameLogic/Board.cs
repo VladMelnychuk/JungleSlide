@@ -16,8 +16,10 @@ public class Board : MonoBehaviour
 
     [SerializeField] private int blockLayerId = 8;
     [SerializeField] private Block[] blocks;
-    private DictionaryObjectPool _objectpool;
+    private DictionaryObjectPool _objectpool; 
     
+    //Score
+    private Score score;
     private void ObjectPoolSetup()
     {
         _objectpool = new DictionaryObjectPool();
@@ -37,6 +39,7 @@ public class Board : MonoBehaviour
     private void Start()
     {
         _grid = new Block[width, height];
+        
         blockLayerId = LayerMask.NameToLayer("block");
         
         ObjectPoolSetup();
@@ -44,6 +47,7 @@ public class Board : MonoBehaviour
 
     private void Update()
     {
+        print(_grid[5, 0]);
         if (PauseController.IsPaused) return;
         
         if (Input.GetKeyDown(KeyCode.Space)) DebugGrid();
@@ -213,6 +217,13 @@ public class Board : MonoBehaviour
         }
     }
 
+    private void CheckBlockStatus() {}
+
+    private void UpdateScore(int scorenum)
+    {
+        score = FindObjectOfType<Score>();
+        score.UpdScore(scorenum);
+    }
     private void CheckLines()
     {
         for (int y = 0; y < height; y++)
@@ -241,9 +252,13 @@ public class Board : MonoBehaviour
                     var block = _grid[xIndex, y];
                     RemoveBlockFromGrid(block);
                     xIndex += block.size;
-
+                    
+                    //Score Update
+                    UpdateScore(1*xIndex);
+                    
                     // TODO Object pool
                     block.Despawn();
+                    
                 }
 
                 ApplyGravity();
