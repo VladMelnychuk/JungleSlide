@@ -1,0 +1,61 @@
+[33m2bb5174[m[33m ([m[1;36mHEAD -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m)[m HEAD@{0}: reset: moving to HEAD
+[33m2bb5174[m[33m ([m[1;36mHEAD -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m)[m HEAD@{1}: commit: object pool fix
+[33m92c79a1[m HEAD@{2}: commit: after-merge fixes
+[33mee43162[m HEAD@{3}: merge develop: Merge made by the 'recursive' strategy.
+[33md6dac65[m HEAD@{4}: checkout: moving from develop to master
+[33mf5636bd[m[33m ([m[1;32mdevelop[m[33m)[m HEAD@{5}: merge master: Merge made by the 'recursive' strategy.
+[33mc717b32[m[33m ([m[1;31morigin/develop[m[33m)[m HEAD@{6}: commit: scene merge fix
+[33maf90168[m HEAD@{7}: checkout: moving from master to develop
+[33md6dac65[m HEAD@{8}: reset: moving to HEAD
+[33md6dac65[m HEAD@{9}: checkout: moving from develop to master
+[33maf90168[m HEAD@{10}: reset: moving to HEAD
+[33maf90168[m HEAD@{11}: commit: object pool
+[33m0dda299[m HEAD@{12}: commit: finished main logic
+[33mca4e6de[m HEAD@{13}: reset: moving to HEAD
+[33mca4e6de[m HEAD@{14}: commit: line popping
+[33m3c4f130[m HEAD@{15}: commit: gravity
+[33m76d06e6[m HEAD@{16}: commit: new logic
+[33m56a9ebf[m HEAD@{17}: checkout: moving from master to develop
+[33md6dac65[m HEAD@{18}: commit: toggle
+[33m1ec74c3[m HEAD@{19}: pull: Fast-forward
+[33m4a560d5[m HEAD@{20}: checkout: moving from UI to master
+[33mf01e8fc[m[33m ([m[1;32mUI[m[33m)[m HEAD@{21}: pull: Fast-forward
+[33m2356a61[m HEAD@{22}: commit: new ui, dotween, menus
+[33m907bd81[m HEAD@{23}: checkout: moving from master to UI
+[33m4a560d5[m HEAD@{24}: reset: moving to HEAD
+[33m4a560d5[m HEAD@{25}: checkout: moving from develop to master
+[33m56a9ebf[m HEAD@{26}: commit: optimization
+[33m907bd81[m HEAD@{27}: checkout: moving from UI to develop
+[33m907bd81[m HEAD@{28}: commit: merge
+[33m5f50c04[m HEAD@{29}: merge master: Merge made by the 'recursive' strategy.
+[33m1ecc6c7[m HEAD@{30}: checkout: moving from master to UI
+[33m4a560d5[m HEAD@{31}: pull: Fast-forward
+[33m8e70caa[m HEAD@{32}: checkout: moving from UI to master
+[33m1ecc6c7[m HEAD@{33}: commit: added basic menu
+[33m8e70caa[m HEAD@{34}: checkout: moving from master to UI
+[33m8e70caa[m HEAD@{35}: commit: lvl 1 super pre-alpha
+[33m63eb38e[m HEAD@{36}: reset: moving to HEAD
+[33m63eb38e[m HEAD@{37}: commit: new prefabs
+[33meda605f[m HEAD@{38}: commit: new prefabs
+[33ma262395[m HEAD@{39}: commit: new prefabs
+[33maa6aeb4[m HEAD@{40}: commit: super pre alpha gameplay
+[33me22a73a[m HEAD@{41}: commit: .
+[33m83d569d[m HEAD@{42}: pull: Fast-forward
+[33m0d0ad65[m HEAD@{43}: checkout: moving from demo to master
+[33mf75e822[m[33m ([m[1;31morigin/demo[m[33m)[m HEAD@{44}: commit: better poppung logic
+[33mdee7178[m HEAD@{45}: commit: line popping mechanic
+[33mdbf4f2b[m HEAD@{46}: commit: fixed grid bug
+[33ma0dc336[m HEAD@{47}: checkout: moving from Simple-Board to demo
+[33m645a021[m[33m ([m[1;31morigin/Simple-Board[m[33m, [m[1;32mSimple-Board[m[33m)[m HEAD@{48}: checkout: moving from demo to Simple-Board
+[33ma0dc336[m HEAD@{49}: commit: demo
+[33m00f59fd[m HEAD@{50}: checkout: moving from Simple-Board to demo
+[33m645a021[m[33m ([m[1;31morigin/Simple-Board[m[33m, [m[1;32mSimple-Board[m[33m)[m HEAD@{51}: checkout: moving from demo to Simple-Board
+[33m00f59fd[m HEAD@{52}: commit: demo
+[33m827413c[m HEAD@{53}: commit: almost demo
+[33m645a021[m[33m ([m[1;31morigin/Simple-Board[m[33m, [m[1;32mSimple-Board[m[33m)[m HEAD@{54}: checkout: moving from Simple-Board to demo
+[33m645a021[m[33m ([m[1;31morigin/Simple-Board[m[33m, [m[1;32mSimple-Board[m[33m)[m HEAD@{55}: checkout: moving from dev to Simple-Board
+[33m4ea808f[m[33m ([m[1;31morigin/dev[m[33m)[m HEAD@{56}: commit: test controlls
+[33m0d0ad65[m HEAD@{57}: checkout: moving from master to dev
+[33m0d0ad65[m HEAD@{58}: reset: moving to HEAD
+[33m0d0ad65[m HEAD@{59}: reset: moving to HEAD
+[33m0d0ad65[m HEAD@{60}: commit (initial): first commit
