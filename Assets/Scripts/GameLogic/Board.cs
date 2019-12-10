@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Text;
+using DG.Tweening;
 using UnityRandom = UnityEngine.Random;
 
 public class Board : MonoBehaviour
@@ -30,7 +31,7 @@ public class Board : MonoBehaviour
         }
 
         // generating level
-        var block1 = _objectpool["1x1- Air"].Spawn(Vector3.zero);
+        var block1 = _objectpool["1x1_Air"].Spawn(Vector3.zero);
         var blockComponent = block1.GetComponent<Block>();
         blockComponent.gridPosition = Vector2Int.zero;
         AddBlockToGrid(blockComponent, Vector2Int.zero);
@@ -117,7 +118,8 @@ public class Board : MonoBehaviour
         block.gridPosition = newPos;
 
         // TODO move block in UI
-        block.transform.position = new Vector3(block.gridPosition.x, block.gridPosition.y, 0);
+//        block.transform.position = new Vector3(block.gridPosition.x, block.gridPosition.y, 0);
+        block.transform.DOMove(new Vector3(block.gridPosition.x, block.gridPosition.y, 0), .3f);
     }
 
     private void AddBlockToGrid(Block block, Vector2Int newPos)
