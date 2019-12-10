@@ -1,6 +1,7 @@
 ﻿using System;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class PauseController : MonoBehaviour
 {
@@ -29,5 +30,12 @@ public class PauseController : MonoBehaviour
         pauseMenu.gameObject.SetActive(false);
         Time.timeScale = 1f;
         IsPaused = false;
+    }
+
+    private void RestartGame()
+    {
+        pauseMenu.gameObject.SetActive(false);
+        IsPaused = false;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }
