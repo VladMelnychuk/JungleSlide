@@ -1,8 +1,11 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System;
+using System.Collections;
+using System.IO;
 using UnityEngine;
 using System.Text;
 using DG.Tweening;
+using Newtonsoft.Json.Linq;
+using Random = System.Random;
 using UnityRandom = UnityEngine.Random;
 
 public class Board : MonoBehaviour
@@ -11,16 +14,18 @@ public class Board : MonoBehaviour
     [SerializeField] private int height;
 
     [SerializeField] private Transform blocksHolder;
-//    public List<Block> activeBlocksList = new List<Block>();
 
     private static Block[,] _grid;
 
     [SerializeField] private int blockLayerId = 8;
     [SerializeField] private Block[] blocks;
-    private DictionaryObjectPool _objectpool; 
-    
+    private DictionaryObjectPool _objectpool;
+
+    private Random rand = new System.Random();
+
     //Score
     private Score score;
+
     private void ObjectPoolSetup()
     {
         _objectpool = new DictionaryObjectPool();
@@ -31,26 +36,42 @@ public class Board : MonoBehaviour
         }
 
         // generating level
-        var block1 = _objectpool["1x1_Air"].Spawn(Vector3.zero);
-        var blockComponent = block1.GetComponent<Block>();
-        blockComponent.gridPosition = Vector2Int.zero;
-        AddBlockToGrid(blockComponent, Vector2Int.zero);
+//        var block1 = _objectpool["1x1_Air"].Spawn(Vector3.zero);
+//        var blockComponent = block1.GetComponent<Block>();
+//        blockComponent.gridPosition = Vector2Int.zero;
+//        AddBlockToGrid(blockComponent, Vector2Int.zero);
+    }
+
+    private void GenerateLevel(string lvlName)
+    {
+        var o1 = JObject.Parse(File.ReadAllText("Assets/Levels/" + lvlName));
+
+        print("NAME: " + lvlName);
+
+        if (o1[lvlName] is JArray blocksToSpawn)
+            foreach (var block in blocksToSpawn)
+            {
+                var pos = new Vector3(float.Parse(block["x"].ToString()), float.Parse(block["y"].ToString()));
+                var spawnedBlock = _objectpool[block["name"].ToString()].Spawn(pos, Quaternion.identity);
+                var spawnedBlockComponent = spawnedBlock.GetComponent<Block>();
+                AddBlockToGrid(spawnedBlockComponent, Vector3ToVector2Int(pos));
+            }
     }
 
     private void Start()
     {
         _grid = new Block[width, height];
-        
+
         blockLayerId = LayerMask.NameToLayer("block");
-        
+
         ObjectPoolSetup();
+        GenerateLevel("l1.json");
     }
 
     private void Update()
     {
-        print(_grid[5, 0]);
         if (PauseController.IsPaused) return;
-        
+
         if (Input.GetKeyDown(KeyCode.Space)) DebugGrid();
 
         if (!Input.GetMouseButtonDown(0)) return;
@@ -69,7 +90,7 @@ public class Board : MonoBehaviour
         var blockInitPosition = new Vector2Int(Mathf.RoundToInt(gameObjectPos.x), Mathf.RoundToInt(gameObjectPos.y));
 
         var block = _grid[blockInitPosition.x, blockInitPosition.y];
-        Debug.LogError("hit " + blockGameObject.name + " at " + blockInitPosition.x + " : " + blockInitPosition.y);
+//        Debug.LogError("hit " + blockGameObject.name + " at " + blockInitPosition.x + " : " + blockInitPosition.y);
 
         var borders = GetBorders(block);
 
@@ -102,13 +123,12 @@ public class Board : MonoBehaviour
 
     private void MoveBlockInGrid(Block block, Vector2Int newPos)
     {
-
         if (newPos.y >= height)
         {
             Debug.LogError("Game Over");
             return;
         }
-        
+
         // set old positions to null aka remove from grid
         RemoveBlockFromGrid(block);
 
@@ -169,7 +189,7 @@ public class Board : MonoBehaviour
 
         return borders;
     }
-    
+
     #region Game Logic
 
     private void ApplyGravity()
@@ -194,7 +214,7 @@ public class Board : MonoBehaviour
                     x += block.size;
 
                     bool canFall = true;
-                    
+
                     for (int i = 0; i < block.size; i++)
                     {
                         if (_grid[blockPos.x + i, newY] != null)
@@ -203,7 +223,7 @@ public class Board : MonoBehaviour
                             break;
                         }
                     }
-                    
+
                     if (canFall)
                     {
                         blockFell = true;
@@ -211,21 +231,23 @@ public class Board : MonoBehaviour
                         newPos.y -= 1;
                         MoveBlockInGrid(block, newPos);
                     }
-
                 }
             }
-            
+
             if (!blockFell) break;
         }
     }
 
-    private void CheckBlockStatus() {}
+    private void CheckBlockStatus()
+    {
+    }
 
     private void UpdateScore(int scorenum)
     {
         score = FindObjectOfType<Score>();
         score.UpdScore(scorenum);
     }
+
     private void CheckLines()
     {
         for (int y = 0; y < height; y++)
@@ -244,7 +266,7 @@ public class Board : MonoBehaviour
             if (lineFound)
             {
                 print("lineFound");
-                
+
                 DebugGrid();
 
                 var xIndex = 0;
@@ -254,13 +276,12 @@ public class Board : MonoBehaviour
                     var block = _grid[xIndex, y];
                     RemoveBlockFromGrid(block);
                     xIndex += block.size;
-                    
+
                     //Score Update
-                    UpdateScore(1*xIndex);
-                    
+                    UpdateScore(1 * xIndex);
+
                     // TODO Object pool
                     block.Despawn();
-                    
                 }
 
                 ApplyGravity();
@@ -286,21 +307,51 @@ public class Board : MonoBehaviour
             }
         }
 
-        DebugGrid();
-
-        var rand = new System.Random();
-        var index = rand.Next(0, blocks.Length - 1);
-
-        var blockToSpawn = blocks[index];
-
-        var spawnedBlock = _objectpool[blockToSpawn.gameObject.name].Spawn(Vector3.zero);
-        
-        var spawnedBlockComponent = spawnedBlock.GetComponent<Block>();
-
-        AddBlockToGrid(spawnedBlockComponent, spawnedBlockComponent.gridPosition);
-
+        SpawnNewBlock();
         ApplyGravity();
         CheckLines();
+    }
+
+    private void SpawnNewBlock()
+    {
+        var maxLimit = blocks.Length - 1;
+
+        var blockToSpawn = blocks[rand.Next(0, maxLimit)];
+
+        var b1Offset = rand.Next(0, 1);
+        var b1 = _objectpool[blockToSpawn.gameObject.name].Spawn(Vector3.zero + Vector3.right * b1Offset);
+        var b1Component = b1.GetComponent<Block>();
+
+        maxLimit -= 3;
+        blockToSpawn = blocks[rand.Next(0, maxLimit)];
+
+        var b2Offset = rand.Next(b1Component.size + b1Offset + 1, b1Component.size + b1Offset + 2);
+        var b2 = _objectpool[blockToSpawn.gameObject.name].Spawn(Vector3.right * b2Offset);
+        var b2Component = b2.GetComponent<Block>();
+
+        var fillAmount = 0;
+
+        fillAmount += b1Component.size;
+        fillAmount += b2Component.size;
+        
+        AddBlockToGrid(b1Component, Vector3ToVector2Int(b1Component.transform.position));
+        AddBlockToGrid(b2Component, Vector3ToVector2Int(b2Component.transform.position));
+
+        if (fillAmount < 7)
+        {
+            print("spawn more");
+            print(fillAmount);
+
+            maxLimit = Mathf.Clamp(width - fillAmount * 3, 3, blocks.Length - 1);
+            
+            blockToSpawn = blocks[rand.Next(0, maxLimit)];
+
+            var b3 = _objectpool[blockToSpawn.gameObject.name].Spawn(Vector3.zero);
+            var b3Component = b3.GetComponent<Block>();
+            b3.transform.position = Vector3.right * (width - b3Component.size);
+            
+            AddBlockToGrid(b3Component, Vector3ToVector2Int(b3Component.transform.position));
+        }
     }
 
     #endregion

@@ -144,10 +144,12 @@ namespace LevelCreation
                 array.Add(obj);
             }
 
-            levelJson[levelName.text] = array;
+            var fileTag = levelName.text + ".json";
+
+            levelJson[fileTag] = array;
             print(levelJson.ToString());
 
-            using (var file = File.CreateText("Assets/Levels/" + levelName.text + ".json"))
+            using (var file = File.CreateText("Assets/Levels/" + fileTag))
             using (var writer = new JsonTextWriter(file))
             {
                 levelJson.WriteTo(writer);

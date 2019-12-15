@@ -19,7 +19,7 @@ public class MenuController : MonoBehaviour
 
     private void Start()
     {
-        DontDestroyOnLoad(this);
+//        DontDestroyOnLoad(this);
         
         var sa = Screen.safeArea;
 
@@ -31,7 +31,7 @@ public class MenuController : MonoBehaviour
     {
         startGameButton.onClick.AddListener(() => OpenPanel(levelMenu));
         settingsButton.onClick.AddListener(() => OpenPanel(settingsMenu));
-        shopButton.onClick.AddListener(() => OpenPanel(shopMenu));
+//        shopButton.onClick.AddListener(() => OpenPanel(shopMenu));
     }
 
     public void LoadLevel()
