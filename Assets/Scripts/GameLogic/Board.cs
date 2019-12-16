@@ -65,7 +65,7 @@ public class Board : MonoBehaviour
         blockLayerId = LayerMask.NameToLayer("block");
 
         ObjectPoolSetup();
-        GenerateLevel("l1.json");
+        GenerateLevel("test.json");
     }
 
     private void Update()
@@ -119,6 +119,11 @@ public class Board : MonoBehaviour
         }
     }
 
+    private IEnumerable CompleteMove()
+    {
+        
+    }
+
     #region Grid Logic
 
     private void MoveBlockInGrid(Block block, Vector2Int newPos)
@@ -138,7 +143,6 @@ public class Board : MonoBehaviour
         block.gridPosition = newPos;
 
         // TODO move block in UI
-//        block.transform.position = new Vector3(block.gridPosition.x, block.gridPosition.y, 0);
         block.transform.DOMove(new Vector3(block.gridPosition.x, block.gridPosition.y, 0), .3f);
     }
 
@@ -271,6 +275,8 @@ public class Board : MonoBehaviour
 
                 var xIndex = 0;
 
+                Tweener tweener = null;
+
                 while (xIndex < width)
                 {
                     var block = _grid[xIndex, y];
@@ -280,11 +286,15 @@ public class Board : MonoBehaviour
                     //Score Update
                     UpdateScore(1 * xIndex);
 
-                    // TODO Object pool
-                    block.Despawn();
+                    tweener = block.transform.DOShakePosition(.3f, .1f, 5);
+                    tweener.onComplete += () => { block.Despawn(); };
                 }
 
-                ApplyGravity();
+
+                if (tweener != null)
+                {
+                    tweener.onComplete += ApplyGravity;
+                }
             }
         }
     }
@@ -315,42 +325,28 @@ public class Board : MonoBehaviour
     private void SpawnNewBlock()
     {
         var maxLimit = blocks.Length - 1;
+        var spawnPosition = 0;
 
-        var blockToSpawn = blocks[rand.Next(0, maxLimit)];
-
-        var b1Offset = rand.Next(0, 1);
-        var b1 = _objectpool[blockToSpawn.gameObject.name].Spawn(Vector3.zero + Vector3.right * b1Offset);
-        var b1Component = b1.GetComponent<Block>();
-
-        maxLimit -= 3;
-        blockToSpawn = blocks[rand.Next(0, maxLimit)];
-
-        var b2Offset = rand.Next(b1Component.size + b1Offset + 1, b1Component.size + b1Offset + 2);
-        var b2 = _objectpool[blockToSpawn.gameObject.name].Spawn(Vector3.right * b2Offset);
-        var b2Component = b2.GetComponent<Block>();
-
-        var fillAmount = 0;
-
-        fillAmount += b1Component.size;
-        fillAmount += b2Component.size;
-        
-        AddBlockToGrid(b1Component, Vector3ToVector2Int(b1Component.transform.position));
-        AddBlockToGrid(b2Component, Vector3ToVector2Int(b2Component.transform.position));
-
-        if (fillAmount < 7)
+        while (spawnPosition < width - 1)
         {
-            print("spawn more");
-            print(fillAmount);
+            var chance = rand.Next(1, 3);
+            if (chance >= 3) continue;
 
-            maxLimit = Mathf.Clamp(width - fillAmount * 3, 3, blocks.Length - 1);
-            
-            blockToSpawn = blocks[rand.Next(0, maxLimit)];
+            var block = blocks[rand.Next(0, maxLimit)];
+            if (block.size + spawnPosition < width)
+            {
+                // good, spawn
+                var pos = Vector3.right * spawnPosition;
+                var spawnedBlock = _objectpool[block.gameObject.name].Spawn(pos, Quaternion.identity);
+                var blockComponent = spawnedBlock.GetComponent<Block>();
+                AddBlockToGrid(blockComponent, Vector3ToVector2Int(pos));
 
-            var b3 = _objectpool[blockToSpawn.gameObject.name].Spawn(Vector3.zero);
-            var b3Component = b3.GetComponent<Block>();
-            b3.transform.position = Vector3.right * (width - b3Component.size);
-            
-            AddBlockToGrid(b3Component, Vector3ToVector2Int(b3Component.transform.position));
+                spawnPosition += block.size;
+            }
+            else
+            {
+                spawnPosition += 1;
+            }
         }
     }
 
