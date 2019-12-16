@@ -5,6 +5,7 @@ using UnityEngine;
 using System.Text;
 using DG.Tweening;
 using Newtonsoft.Json.Linq;
+using UnityEngine.Networking;
 using Random = System.Random;
 using UnityRandom = UnityEngine.Random;
 
@@ -34,21 +35,26 @@ public class Board : MonoBehaviour
             var blockGameObject = block.gameObject;
             _objectpool.AddObjectPool(blockGameObject.name, blockGameObject, blocksHolder, 20);
         }
-
-        // generating level
-//        var block1 = _objectpool["1x1_Air"].Spawn(Vector3.zero);
-//        var blockComponent = block1.GetComponent<Block>();
-//        blockComponent.gridPosition = Vector2Int.zero;
-//        AddBlockToGrid(blockComponent, Vector2Int.zero);
     }
 
-    private void GenerateLevel(string lvlName)
+    private IEnumerator GenerateLevel(string lvlName)
     {
-        var o1 = JObject.Parse(File.ReadAllText("Assets/Levels/" + lvlName));
+        var path = Path.Combine(Application.streamingAssetsPath, "Levels", lvlName + ".json");
 
-        print("NAME: " + lvlName);
+        var req = UnityWebRequest.Get(path);
 
-        if (o1[lvlName] is JArray blocksToSpawn)
+        yield return req.SendWebRequest();
+
+        if (req.isNetworkError)
+        {
+            Debug.LogError("Error: " + req.error);
+        }
+        else
+        {
+            var jObject = JObject.Parse(req.downloadHandler.text);
+
+            if (!(jObject[lvlName] is JArray blocksToSpawn)) yield break;
+
             foreach (var block in blocksToSpawn)
             {
                 var pos = new Vector3(float.Parse(block["x"].ToString()), float.Parse(block["y"].ToString()));
@@ -56,6 +62,7 @@ public class Board : MonoBehaviour
                 var spawnedBlockComponent = spawnedBlock.GetComponent<Block>();
                 AddBlockToGrid(spawnedBlockComponent, Vector3ToVector2Int(pos));
             }
+        }
     }
 
     private void Start()
@@ -65,7 +72,7 @@ public class Board : MonoBehaviour
         blockLayerId = LayerMask.NameToLayer("block");
 
         ObjectPoolSetup();
-        GenerateLevel("test.json");
+        StartCoroutine(GenerateLevel(LevelLoader.CurrentLevelName));
     }
 
     private void Update()
@@ -90,7 +97,6 @@ public class Board : MonoBehaviour
         var blockInitPosition = new Vector2Int(Mathf.RoundToInt(gameObjectPos.x), Mathf.RoundToInt(gameObjectPos.y));
 
         var block = _grid[blockInitPosition.x, blockInitPosition.y];
-//        Debug.LogError("hit " + blockGameObject.name + " at " + blockInitPosition.x + " : " + blockInitPosition.y);
 
         var borders = GetBorders(block);
 
@@ -111,17 +117,19 @@ public class Board : MonoBehaviour
         if (gameObjectPos != block.transform.position)
         {
             // move completed
-            MoveBlockInGrid(block, Vector3ToVector2Int(block.transform.position));
-            ApplyGravity();
-            CheckLines();
-
-            NextTurn();
+            StartCoroutine(CompleteMove(block));
         }
     }
 
-    private IEnumerable CompleteMove()
+    private IEnumerator CompleteMove(Block block)
     {
-        
+        const float delay = .1f;
+        MoveBlockInGrid(block, Vector3ToVector2Int(block.transform.position));
+        ApplyGravity();
+        yield return new WaitForSeconds(delay);
+        CheckLines();
+        yield return new WaitForSeconds(delay);
+        NextTurn();
     }
 
     #region Grid Logic
@@ -131,6 +139,7 @@ public class Board : MonoBehaviour
         if (newPos.y >= height)
         {
             Debug.LogError("Game Over");
+            block.Despawn();
             return;
         }
 
@@ -181,7 +190,7 @@ public class Board : MonoBehaviour
         }
 
         // get right border
-        for (int right = block.size + block.gridPosition.x - 1; right < width; right++)
+        for (var right = block.size + block.gridPosition.x - 1; right < width; right++)
         {
             if (_grid[right, block.gridPosition.y] == null) continue;
             if (_grid[right, block.gridPosition.y] != block)
@@ -267,34 +276,31 @@ public class Board : MonoBehaviour
                 }
             }
 
-            if (lineFound)
+            if (!lineFound) continue;
+
+            print("lineFound");
+
+            var xIndex = 0;
+
+            Tweener tweener = null;
+
+            while (xIndex < width)
             {
-                print("lineFound");
+                var block = _grid[xIndex, y];
+                RemoveBlockFromGrid(block);
+                xIndex += block.size;
 
-                DebugGrid();
+                //Score Update
+                UpdateScore(1 * xIndex);
 
-                var xIndex = 0;
-
-                Tweener tweener = null;
-
-                while (xIndex < width)
-                {
-                    var block = _grid[xIndex, y];
-                    RemoveBlockFromGrid(block);
-                    xIndex += block.size;
-
-                    //Score Update
-                    UpdateScore(1 * xIndex);
-
-                    tweener = block.transform.DOShakePosition(.3f, .1f, 5);
-                    tweener.onComplete += () => { block.Despawn(); };
-                }
+                tweener = block.transform.DOShakePosition(.1f, .1f, 5);
+                tweener.onComplete += () => { block.Despawn(); };
+            }
 
 
-                if (tweener != null)
-                {
-                    tweener.onComplete += ApplyGravity;
-                }
+            if (tweener != null)
+            {
+                tweener.onComplete += ApplyGravity;
             }
         }
     }

@@ -1,11 +1,13 @@
-﻿using UnityEngine.SceneManagement;
+﻿using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 
 public class LevelLoader
 {
-    
+    public static string CurrentLevelName;
+
     public static void LoadLevel()
     {
-        // TODO lvl editor
+        CurrentLevelName = EventSystem.current.currentSelectedGameObject.name;
         SceneManager.LoadScene(1);
     }
 }
