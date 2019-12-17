@@ -6,16 +6,36 @@ using UnityEngine.SceneManagement;
 public class PauseController : MonoBehaviour
 {
     public static bool IsPaused = false;
+    public static bool IsSett = false;
 
     [SerializeField] private Button pauseButton;
     [SerializeField] private Button resumeButton;
+    [SerializeField] private Button replayButton;
+    [SerializeField] private Button homeButton;
+    [SerializeField] private Button settingsButton;
 
     [SerializeField] private RectTransform pauseMenu;
+    [SerializeField] private RectTransform settings;
+
 
     private void Start()
     {
         pauseButton.onClick.AddListener(PauseGame);
         resumeButton.onClick.AddListener(ResumeGame);
+        replayButton.onClick.AddListener(RestartGame);
+        homeButton.onClick.AddListener(HomeFunc);
+        settingsButton.onClick.AddListener(SettingsFunc);
+    }
+
+    private void SettingsFunc(){
+        settings.gameObject.SetActive(true);
+        IsSett = true;
+        print("Settings Function");
+
+    }
+
+    private void HomeFunc(){
+        print("Home Function");
     }
 
     private void PauseGame()
