@@ -30,13 +30,9 @@ public class PauseController : MonoBehaviour
     private void SettingsFunc(){
         settings.gameObject.SetActive(true);
         IsSett = true;
-        print("Settings Function");
-
     }
 
-    private void HomeFunc(){
-        print("Home Function");
-    }
+    private void HomeFunc(){}
 
     private void PauseGame()
     {
