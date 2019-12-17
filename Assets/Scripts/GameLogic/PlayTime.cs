@@ -8,10 +8,13 @@ public class PlayTime : MonoBehaviour
 {
 	private TMP_Text timeBox;
 	public float timeStart;
+
+    private int touches;
     
     void Start()
     {
         timeBox = GetComponent<TMP_Text>();
+
     }
     void Update()
     {
