@@ -342,7 +342,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.257}
   m_AnchorMax: {x: 1, y: 0.43877357}
-  m_AnchoredPosition: {x: 0, y: 9.000626}
+  m_AnchoredPosition: {x: 0, y: 9.000687}
   m_SizeDelta: {x: -10, y: -4}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &168000470
@@ -3478,8 +3478,8 @@ MonoBehaviour:
   settingsPanel: {fileID: 640130772}
   buttonRotation: {x: 0, y: 0, z: 50}
   blur: {fileID: 547381688}
-  facebookButton: {fileID: 25846566}
-  restartButton: {fileID: 2135666586}
+  facebookButton: {fileID: 0}
+  restartButton: {fileID: 0}
 --- !u!114 &1170526379
 MonoBehaviour:
   m_ObjectHideFlags: 0
