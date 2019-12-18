@@ -77,7 +77,7 @@ public class Board : MonoBehaviour
 
     private void Update()
     {
-        if (PauseController.IsPaused) return;
+        if (Game.GameState == GameState.Paused) return;
 
         if (Input.GetKeyDown(KeyCode.Space)) DebugGrid();
 
