@@ -22,6 +22,6 @@ public class Score : MonoBehaviour
 
     public void UpdScore(int score){
     	scoreNum += score;
-    	print("Score: " + scoreNum);
+//    	print("Score: " + scoreNum);
     }
 }

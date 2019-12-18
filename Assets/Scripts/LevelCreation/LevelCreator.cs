@@ -144,7 +144,7 @@ namespace LevelCreation
                 array.Add(obj);
             }
 
-            var fileTag = levelName.text + ".json";
+            var fileTag = levelName.text;
 
             levelJson[fileTag] = array;
             print(levelJson.ToString());

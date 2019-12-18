@@ -10,6 +10,22 @@ public class SettingsController : MonoBehaviour
     [SerializeField] private RectTransform settingsPanel;
     [SerializeField] private Vector3 buttonRotation;
 
+    [SerializeField] private RawImage blur;
+
+    private bool _isPaused = false;
+
+    #region SettingsButtons
+
+    [Header("Settings Menu Buttons")]
+//    [SerializeField] private Button soundsButton;
+//    [SerializeField] private Button musicButton;
+    [SerializeField]
+    private Button facebookButton;
+
+    [SerializeField] private Button restartButton;
+
+    #endregion
+
     private bool _isOpen = false;
 
     private void Start()
@@ -20,25 +36,60 @@ public class SettingsController : MonoBehaviour
 
     private void Settings()
     {
-        print("Settings()");
-        if (_isOpen)
+        var tween = settingButtonIcon.transform.DORotate(_isOpen ? -buttonRotation : buttonRotation,
+            AnimationsInfo.UIAnimationDuration);
+
+        // TODO only if game state changes?
+        Populate();
+
+        settingsPanel.gameObject.SetActive(!_isOpen);
+
+        switch (Game.GameState)
         {
-            // close
-            
-            settingButtonIcon.transform.DORotate(-buttonRotation, .5f);
-            settingsPanel.gameObject.SetActive(false);
-//            settingsPanel.DOMove(settingsPanel.transform.position + Vector3.up * 300, .5f);
-//            settingsPanel.
-        }
-        else
-        {
-            // open
-            settingButtonIcon.transform.DORotate(buttonRotation, .5f);
-            settingsPanel.gameObject.SetActive(true);
-//            settingsPanel.DOMove(settingsPanel.transform.position + Vector3.up * -300, .5f);
+            case GameState.Playing:
+                PauseGame();
+                break;
+            case GameState.Paused:
+                ResumeGame();
+                break;
         }
 
         _isOpen ^= true;
     }
-    
+
+    private void Populate()
+    {
+        switch (Game.GameState)
+        {
+            case GameState.Menu:
+                facebookButton.gameObject.SetActive(true);
+                restartButton.gameObject.SetActive(false);
+                break;
+            case GameState.Paused:
+                // TODO change icon?
+                facebookButton.gameObject.SetActive(false);
+                restartButton.gameObject.SetActive(true);
+                break;
+        }
+    }
+
+    #region Pause
+
+    private void PauseGame()
+    {
+        blur.gameObject.SetActive(true);
+        blur.DOColor(AnimationsInfo.FadedColor, AnimationsInfo.UIAnimationDuration).onComplete += () =>
+        {
+            Game.GameState = GameState.Paused;
+        };
+    }
+
+    private void ResumeGame()
+    {
+        Game.GameState = GameState.Playing;
+        blur.DOColor(AnimationsInfo.DisappearedColor, AnimationsInfo.UIAnimationDuration).onComplete +=
+            () => blur.gameObject.SetActive(false);
+    }
+
+    #endregion
 }
