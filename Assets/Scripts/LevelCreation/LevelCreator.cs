@@ -4,6 +4,7 @@ using System.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.UI;
 
 namespace LevelCreation
@@ -128,7 +129,6 @@ namespace LevelCreation
 
         private void SaveLevel()
         {
-            var levelJson = new JObject();
             var array = new JArray();
 
             foreach (Transform block in blocksParent)
@@ -144,21 +144,52 @@ namespace LevelCreation
                 array.Add(obj);
             }
 
-            var fileTag = levelName.text;
+            var lvlObject = new JObject {[levelName.text] = array};
+            
+            print("1");
 
-            levelJson[fileTag] = array;
-            print(levelJson.ToString());
-
-            using (var file = File.CreateText("Assets/Levels/" + fileTag))
-            using (var writer = new JsonTextWriter(file))
-            {
-                levelJson.WriteTo(writer);
-            }
+            StartCoroutine(SaveLevelToFile(lvlObject));
+            
+            print("1.5");
         }
 
-        private void OnDestroy()
+        private IEnumerator SaveLevelToFile(JObject lvlObject)
         {
-//            SaveLevel();
+            var path = Path.Combine(Application.streamingAssetsPath, "Levels", "levels.json");
+
+            var req = UnityWebRequest.Get(path);
+
+            yield return req.SendWebRequest();
+            
+            print("2");
+
+            if (req.isNetworkError)
+            {
+                Debug.LogError("Error: " + req.error);
+                yield break;
+            }
+
+            var jObject = JObject.Parse(req.downloadHandler.text);
+            
+            print("3");
+
+            if (!(jObject["lvls"] is JArray levels)) yield break;
+            
+            levels.Add(lvlObject);
+                
+            jObject["lvls"] = levels;
+            
+            print("4");
+                
+            using (var file =
+                File.CreateText(Path.Combine(Application.streamingAssetsPath, "Levels", "levels.json")))
+
+            using (var writer = new JsonTextWriter(file))
+            {
+                jObject.WriteTo(writer);
+            }
+                
+            print(jObject.ToString());
         }
     }
 }

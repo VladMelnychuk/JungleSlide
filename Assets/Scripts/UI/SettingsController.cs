@@ -10,7 +10,7 @@ public class SettingsController : MonoBehaviour
     [SerializeField] private RectTransform settingsPanel;
     [SerializeField] private Vector3 buttonRotation;
 
-    [SerializeField] private RawImage blur;
+    [SerializeField] private Button blur;
 
     private bool _isPaused = false;
 
@@ -31,6 +31,7 @@ public class SettingsController : MonoBehaviour
     private void Start()
     {
         settingButton.onClick.AddListener(Settings);
+        blur.onClick.AddListener(ResumeGame);
         DontDestroyOnLoad(this);
     }
 
@@ -78,16 +79,18 @@ public class SettingsController : MonoBehaviour
     private void PauseGame()
     {
         blur.gameObject.SetActive(true);
-        blur.DOColor(AnimationsInfo.FadedColor, AnimationsInfo.UIAnimationDuration).onComplete += () =>
+        blur.GetComponent<CanvasGroup>().DOFade(1, AnimationsInfo.UIAnimationDuration).onComplete += () =>
         {
             Game.GameState = GameState.Paused;
+            blur.enabled = true;
         };
     }
 
     private void ResumeGame()
     {
+        blur.enabled = false;
         Game.GameState = GameState.Playing;
-        blur.DOColor(AnimationsInfo.DisappearedColor, AnimationsInfo.UIAnimationDuration).onComplete +=
+        blur.GetComponent<CanvasGroup>().DOFade(0, AnimationsInfo.UIAnimationDuration).onComplete +=
             () => blur.gameObject.SetActive(false);
     }
 

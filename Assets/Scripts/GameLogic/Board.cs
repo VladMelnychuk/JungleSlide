@@ -53,7 +53,7 @@ public class Board : MonoBehaviour
         {
             var jObject = JObject.Parse(req.downloadHandler.text);
 
-            if (!(jObject[lvlName] is JArray blocksToSpawn)) yield break;
+            if (!(Game.Levels[] is JArray levels)) yield break;
 
             foreach (var block in blocksToSpawn)
             {
@@ -130,6 +130,11 @@ public class Board : MonoBehaviour
         CheckLines();
         yield return new WaitForSeconds(delay);
         NextTurn();
+
+//        Sequence seq = DOTween.Sequence();
+//        seq.Insert()
+
+
     }
 
     #region Grid Logic
