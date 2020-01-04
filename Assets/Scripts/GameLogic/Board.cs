@@ -16,7 +16,7 @@ public class Board : MonoBehaviour
 
     [SerializeField] private Transform blocksHolder;
 
-    private static Block[,] _grid;
+    public static Block[,] _grid;
 
     [SerializeField] private int blockLayerId = 8;
     [SerializeField] private Block[] blocks;

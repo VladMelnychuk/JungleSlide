@@ -1,10 +1,18 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 
 namespace Boosts
 {
-    public class TNT : MonoBehaviour
+    public class TNT : Boost
     {
+
+        [SerializeField] public int pulsingRow = 0;
+
+        private List<Transform> _pulsingBlocks = new List<Transform>();
+        
         void Start()
         {
         }
@@ -13,40 +21,46 @@ namespace Boosts
         {
         }
 
-        private void KeepInGrid()
+        public override void ApplyBoost()
         {
+            BoostUIComponent.IsBoostActive = true;
         }
 
-        private IEnumerator MovingBlock(GameObject blockGameObject)
+        public override void Interact(Vector3 pos)
         {
-            yield break;
-//            var gameObjectPos = blockGameObject.transform.position;
-//            var blockInitPosition =
-//                new Vector2Int(Mathf.RoundToInt(gameObjectPos.x), Mathf.RoundToInt(gameObjectPos.y));
-//
-//            var block = _grid[blockInitPosition.x, blockInitPosition.y];
-//
-//            var borders = GetBorders(block);
-//
-//            while (Input.GetMouseButton(0))
-//            {
-//                var newX = Mathf.RoundToInt(Camera.main.ScreenToWorldPoint(Input.mousePosition).x);
-//
-//                if (newX >= borders.x && newX <= borders.y)
-//                {
-//                    // can move
-//                    var newPos = new Vector3(newX, block.gridPosition.y, 0);
-//                    block.transform.position = newPos;
-//                }
-//
-//                yield return null;
-//            }
-//
-//            if (gameObjectPos != block.transform.position)
-//            {
-//                // move completed
-//                StartCoroutine(CompleteMove(block));
-//            }
+            var newRow = Mathf.RoundToInt(pos.y);
+
+            if (newRow != pulsingRow)
+            {
+                StopAnimations();
+                AddAnimations(newRow);
+            }
+            else
+            {
+                
+            }
+        }
+
+        private void AddAnimations(int newRow)
+        {
+            for (var i = 0; i < 8; i++)
+            {
+                if (Board._grid[newRow, i] == null) continue;
+                var blockTransform = Board._grid[newRow, i].transform;
+                blockTransform.DOScale(0.7f, 0.4f).SetLoops(-1, LoopType.Yoyo);
+                _pulsingBlocks.Add(blockTransform);
+            }
+
+            pulsingRow = newRow;
+        }
+
+        private void StopAnimations()
+        {
+            foreach (var blockTransform in _pulsingBlocks)
+            {
+                DOTween.Kill (blockTransform);
+            }
+            _pulsingBlocks.Clear();
         }
     }
 }
