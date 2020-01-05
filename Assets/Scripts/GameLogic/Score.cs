@@ -6,13 +6,14 @@ using TMPro;
 
 public class Score : MonoBehaviour
 {
-	private TMP_Text scoreBox;
-	private float scoreNum;
+//	private TMP_Text scoreBox;
+    [SerializeField] private Text scoreBox;
+    private float scoreNum;
 
     void Start()
-    {	
-    	scoreNum = 0;
-        scoreBox = GetComponent<TMP_Text>();
+    {
+        scoreNum = 0;
+//        scoreBox = GetComponent<TMP_Text>();
     }
 
     void Update()
@@ -20,8 +21,9 @@ public class Score : MonoBehaviour
         scoreBox.text = "" + Mathf.Round(scoreNum).ToString();
     }
 
-    public void UpdScore(int score){
-    	scoreNum += score;
+    public void UpdScore(int score)
+    {
+        scoreNum += score;
 //    	print("Score: " + scoreNum);
     }
 }
