@@ -149,7 +149,8 @@ namespace LevelCreation
             levelJson[fileTag] = array;
             print(levelJson.ToString());
 
-            using (var file = File.CreateText("Assets/Levels/" + fileTag))
+            var filePath = Path.Combine(Application.streamingAssetsPath, "Levels", fileTag + ".json"); 
+            using (var file = File.CreateText(filePath))
             using (var writer = new JsonTextWriter(file))
             {
                 levelJson.WriteTo(writer);

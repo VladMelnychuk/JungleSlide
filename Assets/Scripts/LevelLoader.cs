@@ -3,7 +3,7 @@ using UnityEngine.SceneManagement;
 
 public class LevelLoader
 {
-    public static string CurrentLevelName = "lvl1";
+    public static string CurrentLevelName = "def";
 
     public static void LoadLevel()
     {
