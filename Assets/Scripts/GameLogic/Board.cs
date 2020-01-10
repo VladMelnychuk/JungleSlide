@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.IO;
 using UnityEngine;
 using System.Text;
@@ -94,7 +93,8 @@ public class Board : MonoBehaviour
     private IEnumerator MovingBlock(GameObject blockGameObject)
     {
         var gameObjectPos = blockGameObject.transform.position;
-        var blockInitPosition = new Vector2Int(Mathf.RoundToInt(gameObjectPos.x), Mathf.RoundToInt(gameObjectPos.y));
+//        var blockInitPosition = new Vector2Int(Mathf.RoundToInt(gameObjectPos.x), Mathf.RoundToInt(gameObjectPos.y));
+        var blockInitPosition = Vector3ToVector2Int(gameObjectPos);
 
         var block = _grid[blockInitPosition.x, blockInitPosition.y];
 
@@ -116,31 +116,59 @@ public class Board : MonoBehaviour
 
         if (gameObjectPos != block.transform.position)
         {
-            // move completed
-            StartCoroutine(CompleteMove(block));
+//            // move completed, block moved
+//            MoveBlockInGrid(block, Vector3ToVector2Int(block.transform.position)).onComplete += () =>
+//            {
+//                // return null when no blocks fell
+//                var res = ApplyGravity();
+//                
+//                if (res != null)
+//                {
+//                    res.onComplete += CheckLines;
+//                }
+//                else
+//                {
+//                    CheckLines();
+//                }
+//            };
+//            
+//            NextTurn();
+            CompleteMove(block);
         }
     }
 
-    private IEnumerator CompleteMove(Block block)
+    private void CompleteMove(Block block)
     {
-        const float delay = .1f;
+        MoveBlockInGrid(block, Vector3ToVector2Int(block.transform.position)).onComplete += () =>
+        {
+            ApplyGravity().onComplete += () =>
+            {
+                CheckLines().onComplete += () =>
+                {
+                    NextTurn();
+                };
+            };
+        };
+    }
+    
+    
+    private void CompleteMove1(Block block)
+    {
         MoveBlockInGrid(block, Vector3ToVector2Int(block.transform.position));
         ApplyGravity();
-        yield return new WaitForSeconds(delay);
         CheckLines();
-        yield return new WaitForSeconds(delay);
         NextTurn();
     }
 
     #region Grid Logic
 
-    private void MoveBlockInGrid(Block block, Vector2Int newPos)
+    private Tweener MoveBlockInGrid(Block block, Vector2Int newPos)
     {
         if (newPos.y >= height)
         {
             Debug.LogError("Game Over");
             block.Despawn();
-            return;
+            return null;
         }
 
         // set old positions to null aka remove from grid
@@ -151,13 +179,13 @@ public class Board : MonoBehaviour
 
         block.gridPosition = newPos;
 
-        // TODO move block in UI
-        block.transform.DOMove(new Vector3(block.gridPosition.x, block.gridPosition.y, 0), .3f);
+        // move block in UI
+        return block.transform.DOMove(new Vector3(block.gridPosition.x, block.gridPosition.y, 0), .3f);
     }
 
     private void AddBlockToGrid(Block block, Vector2Int newPos)
     {
-        for (int i = newPos.x; i < newPos.x + block.size; i++)
+        for (var i = newPos.x; i < newPos.x + block.size; i++)
         {
             _grid[i, newPos.y] = block;
         }
@@ -165,7 +193,7 @@ public class Board : MonoBehaviour
 
     private void RemoveBlockFromGrid(Block block)
     {
-        for (int i = block.gridPosition.x; i < block.gridPosition.x + block.size; i++)
+        for (var i = block.gridPosition.x; i < block.gridPosition.x + block.size; i++)
         {
             _grid[i, block.gridPosition.y] = null;
         }
@@ -179,25 +207,21 @@ public class Board : MonoBehaviour
         var borders = new Vector2Int(0, width - block.size);
 
         // get left border
-        for (int left = block.gridPosition.x; left >= 0; left--)
+        for (var left = block.gridPosition.x; left >= 0; left--)
         {
             if (_grid[left, block.gridPosition.y] == null) continue;
-            if (_grid[left, block.gridPosition.y] != block)
-            {
-                borders.x = left + 1;
-                break;
-            }
+            if (_grid[left, block.gridPosition.y] == block) continue;
+            borders.x = left + 1;
+            break;
         }
 
         // get right border
         for (var right = block.size + block.gridPosition.x - 1; right < width; right++)
         {
             if (_grid[right, block.gridPosition.y] == null) continue;
-            if (_grid[right, block.gridPosition.y] != block)
-            {
-                borders.y = right - block.size;
-                break;
-            }
+            if (_grid[right, block.gridPosition.y] == block) continue;
+            borders.y = right - block.size;
+            break;
         }
 
         return borders;
@@ -205,15 +229,16 @@ public class Board : MonoBehaviour
 
     #region Game Logic
 
-    private void ApplyGravity()
+    private Tween ApplyGravity()
     {
+        Tween lastTween = null;
         while (true)
         {
             var blockFell = false;
 
-            for (int y = height - 1; y > 0; y--)
+            for (var y = height - 1; y > 0; y--)
             {
-                for (int x = 0; x < width;)
+                for (var x = 0; x < width;)
                 {
                     if (_grid[x, y] == null)
                     {
@@ -226,33 +251,29 @@ public class Board : MonoBehaviour
                     var newY = blockPos.y - 1;
                     x += block.size;
 
-                    bool canFall = true;
+                    var canFall = true;
 
-                    for (int i = 0; i < block.size; i++)
+                    for (var i = 0; i < block.size; i++)
                     {
-                        if (_grid[blockPos.x + i, newY] != null)
-                        {
-                            canFall = false;
-                            break;
-                        }
+                        if (_grid[blockPos.x + i, newY] == null) continue;
+
+                        canFall = false;
+                        break;
                     }
 
-                    if (canFall)
-                    {
-                        blockFell = true;
-                        var newPos = block.gridPosition;
-                        newPos.y -= 1;
-                        MoveBlockInGrid(block, newPos);
-                    }
+                    if (!canFall) continue;
+
+                    blockFell = true;
+                    var newPos = block.gridPosition;
+                    newPos.y -= 1;
+                    lastTween = MoveBlockInGrid(block, newPos);
                 }
             }
 
             if (!blockFell) break;
         }
-    }
 
-    private void CheckBlockStatus()
-    {
+        return lastTween;
     }
 
     private void UpdateScore(int scorenum)
@@ -261,7 +282,7 @@ public class Board : MonoBehaviour
         score.UpdScore(scorenum);
     }
 
-    private void CheckLines()
+    private Tween CheckLines()
     {
         for (int y = 0; y < height; y++)
         {
@@ -293,16 +314,24 @@ public class Board : MonoBehaviour
                 //Score Update
                 UpdateScore(1 * xIndex);
 
-                tweener = block.transform.DOShakePosition(.1f, .1f, 5);
+                tweener = block.transform.DOShakePosition(.3f, .1f, 5);
                 tweener.onComplete += () => { block.Despawn(); };
             }
 
 
             if (tweener != null)
             {
-                tweener.onComplete += ApplyGravity;
+                // line popped
+                tweener.onComplete += () => ApplyGravity();
+                return tweener;
+
+//                return ApplyGravity();
             }
+
+            return ApplyGravity();
         }
+
+        return null;
     }
 
     private void NextTurn()

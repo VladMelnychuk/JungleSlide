@@ -107,10 +107,6 @@ namespace LevelCreation
                 print(hit.collider.gameObject.name);
                 StartCoroutine(MovingBlock(hit.collider.gameObject));
             }
-            else
-            {
-                print("missed?");
-            }
         }
 
         private IEnumerator MovingBlock(GameObject blockGameObject)
