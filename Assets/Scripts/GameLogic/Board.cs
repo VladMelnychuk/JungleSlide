@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using System.Text;
@@ -126,27 +127,22 @@ public class Board : MonoBehaviour
     {
         MoveBlockInGrid(block, Vector3ToVector2Int(block.transform.position)).onComplete += () =>
         {
-            print(1);
             var gravityTween = ApplyGravity();
             if (gravityTween == null)
             {
                 // no blocks fell
                 NextTurn();
-                print(1.1);
             }
             else
             {
                 gravityTween.onComplete += () =>
                 {
-                    print(2);
                     var lineCheckTween = CheckLines();
                     if (lineCheckTween != null)
                     {
-                        print(3);
                         // line popped
                         lineCheckTween.onComplete += () =>
                         {
-                            print(4);
                             _linePopTween.Play();
                             _linePopTween.onComplete += NextTurn;
                         };
@@ -162,12 +158,21 @@ public class Board : MonoBehaviour
     }
 
 
-    private void CompleteMove1(Block block)
+    public void ApplyBoost(List<Block> blocksToDespawn)
     {
-        MoveBlockInGrid(block, Vector3ToVector2Int(block.transform.position));
+        foreach (var block in blocksToDespawn)
+        {
+            RemoveBlockFromGrid(block);
+            block.Despawn();
+        }
+        
         ApplyGravity();
         CheckLines();
-        NextTurn();
+    }
+    
+    public void ApplyBoost(Block block)
+    {
+        AddBlockToGrid(block, block.gridPosition);
     }
 
     #region Grid Logic

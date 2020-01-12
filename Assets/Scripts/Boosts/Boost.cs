@@ -11,21 +11,22 @@ namespace Boosts
         [SerializeField] private Vector3 spawnPositionUI;
 
         [SerializeField] private Button interact;
-        
-        int _boostLayerId = 10;
+        [SerializeField] private Button spawnBoost;
 
         [SerializeField] protected RectTransform gfxComponent;
+
+        [SerializeField] protected Board gameBoard;
 
         private void Start()
         {
             spawnPositionUI = Camera.main.WorldToScreenPoint(spawnPosition);
-            _boostLayerId = LayerMask.NameToLayer("boost");
             interact.onClick.AddListener(Interact);
+            spawnBoost.onClick.AddListener(SpawnBoost);
         }
 
         protected abstract void Interact();
 
-        public void SpawnBoost()
+        private void SpawnBoost()
         {
             gfxComponent.gameObject.SetActive(true);
             gfxComponent.position = spawnPositionUI;
@@ -35,28 +36,26 @@ namespace Boosts
         {
             if (!Input.GetMouseButtonDown(0)) return;
 
-            var pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            var hit = Physics2D.Raycast(pos, Vector2.zero);
-            
-            if (hit.collider && hit.collider.gameObject.layer == _boostLayerId)
+            if (gfxComponent.gameObject.activeSelf)
             {
                 StartCoroutine(MovingBlock());
             }
+            
         }
 
         private IEnumerator MovingBlock()
         {
+            yield return new WaitForSeconds(.5f);
+            Game.GameState = GameState.Paused;
             while (Input.GetMouseButton(0))
             {
-                var fingerPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                var fingerPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);;
                 var intPos = Board.Vector3ToVector2Int(fingerPos);
-
                 var newPos = new Vector3 {x = intPos.x, y = intPos.y};
-
-                gfxComponent.position = newPos;
-                
+                gfxComponent.position = Camera.main.WorldToScreenPoint(newPos);
                 yield return null;
             }
+            Game.GameState = GameState.Playing;
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace Boosts
 {
@@ -8,11 +9,24 @@ namespace Boosts
         {
             var yIndex = Mathf.RoundToInt(Camera.main.ScreenToWorldPoint(gfxComponent.position).y);
 
-            for (var x = 0; x < 10; x++)
+            var removedBlocks = new List<Block>();
+
+            for (var x = 0; x < 8;)
             {
-                
+                var block = Board._grid[x, yIndex];
+                if (block == null)
+                {
+                    x += 1;
+                    continue;
+                }
+                x += block.size;
+                // TODO animate
+                removedBlocks.Add(block);
             }
             
+            gameBoard.ApplyBoost(removedBlocks);
+            
+            gfxComponent.gameObject.SetActive(false);
         }
     }
 }
