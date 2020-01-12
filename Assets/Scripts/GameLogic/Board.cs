@@ -23,6 +23,8 @@ public class Board : MonoBehaviour
 
     private Random rand = new System.Random();
 
+    private Tween _linePopTween;
+
     //Score
     private Score score;
 
@@ -116,23 +118,6 @@ public class Board : MonoBehaviour
 
         if (gameObjectPos != block.transform.position)
         {
-//            // move completed, block moved
-//            MoveBlockInGrid(block, Vector3ToVector2Int(block.transform.position)).onComplete += () =>
-//            {
-//                // return null when no blocks fell
-//                var res = ApplyGravity();
-//                
-//                if (res != null)
-//                {
-//                    res.onComplete += CheckLines;
-//                }
-//                else
-//                {
-//                    CheckLines();
-//                }
-//            };
-//            
-//            NextTurn();
             CompleteMove(block);
         }
     }
@@ -141,17 +126,42 @@ public class Board : MonoBehaviour
     {
         MoveBlockInGrid(block, Vector3ToVector2Int(block.transform.position)).onComplete += () =>
         {
-            ApplyGravity().onComplete += () =>
+            print(1);
+            var gravityTween = ApplyGravity();
+            if (gravityTween == null)
             {
-                CheckLines().onComplete += () =>
+                // no blocks fell
+                NextTurn();
+                print(1.1);
+            }
+            else
+            {
+                gravityTween.onComplete += () =>
                 {
-                    NextTurn();
+                    print(2);
+                    var lineCheckTween = CheckLines();
+                    if (lineCheckTween != null)
+                    {
+                        print(3);
+                        // line popped
+                        lineCheckTween.onComplete += () =>
+                        {
+                            print(4);
+                            _linePopTween.Play();
+                            _linePopTween.onComplete += NextTurn;
+                        };
+                    }
+                    else
+                    {
+                        // no line
+                        NextTurn();
+                    }
                 };
-            };
+            }
         };
     }
-    
-    
+
+
     private void CompleteMove1(Block block)
     {
         MoveBlockInGrid(block, Vector3ToVector2Int(block.transform.position));
@@ -164,6 +174,13 @@ public class Board : MonoBehaviour
 
     private Tweener MoveBlockInGrid(Block block, Vector2Int newPos)
     {
+        var duration = .3f;
+        var pos = Vector3ToVector2Int(block.transform.position);
+        if (pos == newPos)
+        {
+            duration = 0;
+        }
+
         if (newPos.y >= height)
         {
             Debug.LogError("Game Over");
@@ -180,7 +197,7 @@ public class Board : MonoBehaviour
         block.gridPosition = newPos;
 
         // move block in UI
-        return block.transform.DOMove(new Vector3(block.gridPosition.x, block.gridPosition.y, 0), .3f);
+        return block.transform.DOMove(new Vector3(block.gridPosition.x, block.gridPosition.y, 0), duration);
     }
 
     private void AddBlockToGrid(Block block, Vector2Int newPos)
@@ -322,23 +339,21 @@ public class Board : MonoBehaviour
             if (tweener != null)
             {
                 // line popped
-                tweener.onComplete += () => ApplyGravity();
+                tweener.onComplete += () => { _linePopTween = ApplyGravity(); };
+                _linePopTween.Pause();
                 return tweener;
-
-//                return ApplyGravity();
             }
-
-            return ApplyGravity();
         }
-
-        return null;
+        
+        return ApplyGravity();;
     }
 
     private void NextTurn()
     {
-        for (int y = (height - 1); y >= 0; y--)
+        Tween tween = null; 
+        for (var y = (height - 1); y >= 0; y--)
         {
-            for (int x = 0; x < width;)
+            for (var x = 0; x < width;)
             {
                 if (_grid[x, y] != null)
                 {
@@ -346,26 +361,37 @@ public class Board : MonoBehaviour
                     x += block.size;
                     var newPos = block.gridPosition;
                     newPos.y += 1;
-                    MoveBlockInGrid(block, newPos);
+                    tween = MoveBlockInGrid(block, newPos);
                 }
                 else x++;
             }
         }
 
-        SpawnNewBlock();
-        ApplyGravity();
-        CheckLines();
+        if (tween == null)
+        {
+            // no blocks, game won?
+            return;
+        }
+        
+        SpawnNewBlocks();
+
+        tween.onComplete += () =>
+        {
+            var grav = ApplyGravity();
+            if (grav != null) grav.onComplete += () => CheckLines();
+            ApplyGravity();
+        };
     }
 
-    private void SpawnNewBlock()
+    private void SpawnNewBlocks()
     {
         var maxLimit = blocks.Length - 1;
         var spawnPosition = 0;
 
         while (spawnPosition < width - 1)
         {
-            var chance = rand.Next(1, 3);
-            if (chance >= 3) continue;
+            var chance = rand.Next(1, 4);
+            if (chance >= 2) continue;
 
             var block = blocks[rand.Next(0, maxLimit)];
             if (block.size + spawnPosition < width)
@@ -404,7 +430,7 @@ public class Board : MonoBehaviour
         Debug.Log(stringBuilder.ToString());
     }
 
-    private static Vector2Int Vector3ToVector2Int(Vector3 vector3)
+    public static Vector2Int Vector3ToVector2Int(Vector3 vector3)
     {
         return new Vector2Int(Mathf.RoundToInt(vector3.x), Mathf.RoundToInt(vector3.y));
     }
