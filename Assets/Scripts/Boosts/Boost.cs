@@ -18,7 +18,7 @@ namespace Boosts
 
         [SerializeField] protected Board gameBoard;
         
-        [SerializeField] private int boostLayerId = 10;
+        [SerializeField] protected int boostLayerId = 10;
         
         protected const string BoostTag = "boost";
 
@@ -46,6 +46,10 @@ namespace Boosts
             {
                 // make UI follow sprite
                 uiComponent.position = Camera.main.WorldToScreenPoint(gfxComponent.position);
+            }
+            else
+            {
+                return;
             }
             
             if (!Input.GetMouseButtonDown(0)) return;

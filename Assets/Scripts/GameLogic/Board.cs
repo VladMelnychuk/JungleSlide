@@ -177,6 +177,15 @@ public class Board : MonoBehaviour
     public void ApplyBoost(Block block)
     {
         AddBlockToGrid(block, block.gridPosition);
+        var grav = ApplyGravity();
+        if (grav != null)
+        {
+            grav.onComplete += () => CheckLines();
+        }
+        else
+        {
+            CheckLines();
+        }
     }
 
     #region Grid Logic
