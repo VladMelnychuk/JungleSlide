@@ -14,13 +14,13 @@ public class Board : MonoBehaviour
     [SerializeField] private int width;
     [SerializeField] private int height;
 
-    [SerializeField] private Transform blocksHolder;
+    [SerializeField] public Transform blocksHolder;
 
     public static Block[,] _grid;
 
     [SerializeField] private int blockLayerId = 8;
     [SerializeField] private Block[] blocks;
-    private DictionaryObjectPool _objectpool;
+    public DictionaryObjectPool objectpool;
 
     private Random rand = new System.Random();
 
@@ -31,11 +31,11 @@ public class Board : MonoBehaviour
 
     private void ObjectPoolSetup()
     {
-        _objectpool = new DictionaryObjectPool();
+        objectpool = new DictionaryObjectPool();
         foreach (var block in blocks)
         {
             var blockGameObject = block.gameObject;
-            _objectpool.AddObjectPool(blockGameObject.name, blockGameObject, blocksHolder, 20);
+            objectpool.AddObjectPool(blockGameObject.name, blockGameObject, blocksHolder, 20);
         }
     }
 
@@ -60,11 +60,16 @@ public class Board : MonoBehaviour
             foreach (var block in blocksToSpawn)
             {
                 var pos = new Vector3(float.Parse(block["x"].ToString()), float.Parse(block["y"].ToString()));
-                var spawnedBlock = _objectpool[block["name"].ToString()].Spawn(pos, Quaternion.identity);
+                var spawnedBlock = objectpool[block["name"].ToString()].Spawn(pos, Quaternion.identity);
                 var spawnedBlockComponent = spawnedBlock.GetComponent<Block>();
                 AddBlockToGrid(spawnedBlockComponent, Vector3ToVector2Int(pos));
             }
         }
+    }
+
+    private void Awake()
+    {
+        ObjectPoolSetup();
     }
 
     private void Start()
@@ -73,7 +78,6 @@ public class Board : MonoBehaviour
 
         blockLayerId = LayerMask.NameToLayer("block");
 
-        ObjectPoolSetup();
         StartCoroutine(GenerateLevel(LevelLoader.CurrentLevelName));
     }
 
@@ -403,7 +407,7 @@ public class Board : MonoBehaviour
             {
                 // good, spawn
                 var pos = Vector3.right * spawnPosition;
-                var spawnedBlock = _objectpool[block.gameObject.name].Spawn(pos, Quaternion.identity);
+                var spawnedBlock = objectpool[block.gameObject.name].Spawn(pos, Quaternion.identity);
                 var blockComponent = spawnedBlock.GetComponent<Block>();
                 AddBlockToGrid(blockComponent, Vector3ToVector2Int(pos));
 

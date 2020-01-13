@@ -7,7 +7,7 @@ namespace Boosts
     {
         protected override void Interact()
         {
-            var yIndex = Mathf.RoundToInt(Camera.main.ScreenToWorldPoint(gfxComponent.position).y);
+            var yIndex = Mathf.RoundToInt(gfxComponent.position.y);
 
             var removedBlocks = new List<Block>();
 
@@ -27,6 +27,7 @@ namespace Boosts
             gameBoard.ApplyBoost(removedBlocks);
             
             gfxComponent.gameObject.SetActive(false);
+            uiComponent.gameObject.SetActive(false);
         }
     }
 }

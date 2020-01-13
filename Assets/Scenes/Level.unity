@@ -527,6 +527,7 @@ MonoBehaviour:
   spawnBoost: {fileID: 1167626568}
   gfxComponent: {fileID: 244321827}
   gameBoard: {fileID: 216218372}
+  boostLayerId: 10
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
