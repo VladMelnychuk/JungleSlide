@@ -7,6 +7,7 @@ namespace Boosts
     public abstract class Boost : MonoBehaviour
     {
         // 4, 5
+
         [SerializeField] protected Vector3 spawnPosition;
         [SerializeField] protected Vector3 spawnPositionUI;
 
@@ -24,10 +25,11 @@ namespace Boosts
 
         protected void Awake()
         {
-            spawnPositionUI = Camera.main.WorldToScreenPoint(spawnPosition);
-            activateBoost.onClick.AddListener(Interact);
-            spawnBoost.onClick.AddListener(SpawnBoost);
-            boostLayerId = LayerMask.NameToLayer("boost");
+            
+             spawnPositionUI = Camera.main.WorldToScreenPoint(spawnPosition);
+             activateBoost.onClick.AddListener(Interact);
+             spawnBoost.onClick.AddListener(SpawnBoost);
+             boostLayerId = LayerMask.NameToLayer("boost");
         }
 
         protected abstract void Interact();

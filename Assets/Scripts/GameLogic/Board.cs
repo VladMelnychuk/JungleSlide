@@ -315,6 +315,7 @@ public class Board : MonoBehaviour
     {
         score = FindObjectOfType<Score>();
         score.UpdScore(scorenum);
+
     }
 
     private Tween CheckLines()

@@ -9,9 +9,11 @@ public class Score : MonoBehaviour
 //	private TMP_Text scoreBox;
     [SerializeField] private Text scoreBox;
     private float scoreNum;
+    private int level_score = 200;
 
     void Start()
     {
+        
         scoreNum = 0;
 //        scoreBox = GetComponent<TMP_Text>();
     }
@@ -24,6 +26,9 @@ public class Score : MonoBehaviour
     public void UpdScore(int score)
     {
         scoreNum += score;
-//    	print("Score: " + scoreNum);
+       if(score == level_score)
+        {
+            print("GAME END");
+        }
     }
 }
