@@ -26,6 +26,8 @@ namespace Boosts
             
             gameBoard.ApplyBoost(removedBlocks);
             
+            SoundManager.TNTPlaced();
+            
             gfxComponent.gameObject.SetActive(false);
             uiComponent.gameObject.SetActive(false);
         }

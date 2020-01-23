@@ -335,6 +335,9 @@ public class Board : MonoBehaviour
             if (!lineFound) continue;
 
             print("lineFound");
+            
+            SoundManager.LinePopped();
+
 
             var xIndex = 0;
 
