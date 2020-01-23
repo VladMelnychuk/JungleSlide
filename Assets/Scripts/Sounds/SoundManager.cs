@@ -15,15 +15,27 @@ public class SoundManager : MonoBehaviour
 
     [SerializeField] private AudioClip buttonClickSound;
 
+    [SerializeField] private AudioClip linePopSoundClip;
+    [SerializeField] private AudioClip TNTSoundClip;
+
     public delegate void ButtonSoundDelegate();
-
     public static event ButtonSoundDelegate OnButtonClicked;
-
-
+    public static event ButtonSoundDelegate OnLinePopped;
+    
+    public static event ButtonSoundDelegate OnTNTPlaced;
+    
     private void Awake()
     {
         DontDestroyOnLoad(this);
         OnButtonClicked += PlayButtonSound;
+        OnLinePopped += PlayLinePoppedSound;
+        OnTNTPlaced += () =>
+        {
+            if (!soundsEnabled) return;
+
+            soundsSource.clip = TNTSoundClip;
+            soundsSource.PlayOneShot(TNTSoundClip);
+        };
     }
 
     private void Start()
@@ -40,17 +52,26 @@ public class SoundManager : MonoBehaviour
 
     }
 
+    private void PlayLinePoppedSound()
+    {
+        if (!soundsEnabled) return;
+        
+        soundsSource.clip = linePopSoundClip;
+        soundsSource.PlayOneShot(linePopSoundClip);
+    }
+    
     public static void ButtonPressed()
     {
         OnButtonClicked?.Invoke();
     }
     
-
-    private void Update()
+    public static void LinePopped()
     {
-        if (Input.GetKey(KeyCode.Space))
-        {
-           
-        }
+        OnLinePopped?.Invoke();
+    }
+    
+    public static void TNTPlaced()
+    {
+        OnTNTPlaced?.Invoke();
     }
 }
