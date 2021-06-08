@@ -4714,6 +4714,8 @@ MonoBehaviour:
   musicSource: {fileID: 250700327}
   soundsSource: {fileID: 80116020}
   buttonClickSound: {fileID: 8300000, guid: 07b5f652ab61e934ebf39bd80b8a5366, type: 3}
+  linePopSoundClip: {fileID: 8300000, guid: 1e12a0e9078f57646963c1129ab22fca, type: 3}
+  TNTSoundClip: {fileID: 8300000, guid: 9c48e9f399c114248a417eb5bad23e7a, type: 3}
 --- !u!4 &1013347165
 Transform:
   m_ObjectHideFlags: 0

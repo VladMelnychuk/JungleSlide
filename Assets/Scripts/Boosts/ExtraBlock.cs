@@ -26,6 +26,8 @@ namespace Boosts
             if (num_int == 0)
             {
                 print("Open game shop");
+                gfxComponent.gameObject.SetActive(false);
+                uiComponent.gameObject.SetActive(false);
             }
             else
             {
